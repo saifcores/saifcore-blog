@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     // CMS edits must show immediately — disable static router cache for prefetched pages.
     staleTimes: {
       dynamic: 0,
-      static: 0,
+      static: 30,
     },
   },
 };

@@ -171,6 +171,11 @@ export function ArticleEditor({ mode, initialSlug, initialPair }: Props) {
     }
   }
 
+  const tagsValue = useMemo(
+    () => active.frontmatter.tags?.join(", ") ?? "",
+    [active.frontmatter.tags],
+  );
+
   const projectsValue = useMemo(
     () => active.frontmatter.relatedProjects?.join(", ") ?? "",
     [active.frontmatter.relatedProjects],
@@ -457,16 +462,18 @@ export function ArticleEditor({ mode, initialSlug, initialPair }: Props) {
             >
               {isSaving ? "Saving…" : "Save article"}
             </button>
-            {mode === "edit" && initialSlug && !locales.en.frontmatter.draft && (
-              <a
-                href={`/articles/${initialSlug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-xl border border-[var(--border-subtle)] px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary)]"
-              >
-                View live ↗
-              </a>
-            )}
+            {mode === "edit" &&
+              initialSlug &&
+              !locales.en.frontmatter.draft && (
+                <a
+                  href={`/articles/${initialSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl border border-[var(--border-subtle)] px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary)]"
+                >
+                  View live ↗
+                </a>
+              )}
             {mode === "edit" && (
               <button
                 type="button"

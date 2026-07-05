@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { previewArticleAction } from "@/app/admin/actions.tsx";
+import { previewArticleAction } from "@/app/admin/actions";
 import { ThemeProvider } from "@/components/theme-provider";
 import type { LocaleCode, PostFrontmatter } from "@/lib/types";
 
