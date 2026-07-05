@@ -326,150 +326,34 @@ export async function writeGitHubMdx(
 
   const path = mdxPath(locale, slug);
   let sha: string | undefined;
-  let readStep = "pending";
-
-  // #region agent log
-  fetch("http://127.0.0.1:7491/ingest/95632c63-416d-4373-aa76-e496270218b5", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "47c565",
-    },
-    body: JSON.stringify({
-      sessionId: "47c565",
-      location: "github-content.ts:writeGitHubMdx:entry",
-      message: "GitHub write started",
-      data: {
-        locale,
-        slug,
-        repo: `${config.owner}/${config.name}`,
-        branch: config.branch,
-        path,
-        tokenKind: tokenKind(config.token),
-      },
-      timestamp: Date.now(),
-      hypothesisId: "A",
-    }),
-  }).catch(() => {});
-  // #endregion
 
   try {
-    readStep = "get-sha";
     const existing = await githubRequest<GitHubContentFile>(
       `/repos/${config.owner}/${config.name}/contents/${encodeRepoPath(path)}?ref=${encodeURIComponent(config.branch)}`,
       undefined,
       "read file for update",
     );
     sha = existing.sha;
-    readStep = "got-sha";
-
-    // #region agent log
-    fetch("http://127.0.0.1:7491/ingest/95632c63-416d-4373-aa76-e496270218b5", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "47c565",
-      },
-      body: JSON.stringify({
-        sessionId: "47c565",
-        location: "github-content.ts:writeGitHubMdx:read-ok",
-        message: "GitHub read for SHA succeeded",
-        data: { slug, locale, hasSha: Boolean(sha) },
-        timestamp: Date.now(),
-        hypothesisId: "B",
-      }),
-    }).catch(() => {});
-    // #endregion
   } catch (error) {
-    readStep = "read-failed";
     if (!(error instanceof Error && error.message.includes("404"))) {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7491/ingest/95632c63-416d-4373-aa76-e496270218b5",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "47c565",
-          },
-          body: JSON.stringify({
-            sessionId: "47c565",
-            location: "github-content.ts:writeGitHubMdx:read-fail",
-            message: "GitHub read failed before write",
-            data: {
-              slug,
-              locale,
-              error: error instanceof Error ? error.message : String(error),
-            },
-            timestamp: Date.now(),
-            hypothesisId: "B",
-          }),
-        },
-      ).catch(() => {});
-      // #endregion
       throw error;
     }
-    readStep = "new-file";
   }
 
-  try {
-    await githubRequest(
-      `/repos/${config.owner}/${config.name}/contents/${encodeRepoPath(path)}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          content: Buffer.from(raw, "utf8").toString("base64"),
-          branch: config.branch,
-          ...(sha ? { sha } : {}),
-        }),
-      },
-      "write file",
-    );
-
-    // #region agent log
-    fetch("http://127.0.0.1:7491/ingest/95632c63-416d-4373-aa76-e496270218b5", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "47c565",
-      },
+  await githubRequest(
+    `/repos/${config.owner}/${config.name}/contents/${encodeRepoPath(path)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        sessionId: "47c565",
-        location: "github-content.ts:writeGitHubMdx:write-ok",
-        message: "GitHub write succeeded",
-        data: { slug, locale, readStep },
-        timestamp: Date.now(),
-        hypothesisId: "C",
+        message,
+        content: Buffer.from(raw, "utf8").toString("base64"),
+        branch: config.branch,
+        ...(sha ? { sha } : {}),
       }),
-    }).catch(() => {});
-    // #endregion
-  } catch (error) {
-    // #region agent log
-    fetch("http://127.0.0.1:7491/ingest/95632c63-416d-4373-aa76-e496270218b5", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "47c565",
-      },
-      body: JSON.stringify({
-        sessionId: "47c565",
-        location: "github-content.ts:writeGitHubMdx:write-fail",
-        message: "GitHub write failed",
-        data: {
-          slug,
-          locale,
-          readStep,
-          error: error instanceof Error ? error.message : String(error),
-        },
-        timestamp: Date.now(),
-        hypothesisId: "C",
-      }),
-    }).catch(() => {});
-    // #endregion
-    throw error;
-  }
+    },
+    "write file",
+  );
 }
 
 export async function deleteGitHubMdx(
