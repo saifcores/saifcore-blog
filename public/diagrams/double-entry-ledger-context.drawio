@@ -1,0 +1,31 @@
+<mxfile host="app.diagrams.net" agent="SAIFCORE Blog" version="24.7.17">
+  <diagram id="double-entry-ledger-context" name="Ledger context">
+    <mxGraphModel dx="1180" dy="680" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="960" pageHeight="360" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="2" value="Payment API&#xa;commands &amp; callbacks" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#172554;strokeColor=#2563eb;fontColor=#dbeafe;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="60" y="120" width="200" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="3" value="Double-entry ledger&#xa;append-only journal" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#134e4a;strokeColor=#10b981;fontColor=#d1fae5;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="380" y="100" width="200" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="4" value="Balance projections&#xa;(cache / read models)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#475569;fontColor=#e2e8f0;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="700" y="120" width="200" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="5" value="Finance / audit&#xa;reconciliation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#475569;fontColor=#e2e8f0" vertex="1" parent="1">
+          <mxGeometry x="380" y="280" width="200" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#64748b;" edge="1" parent="1" source="2" target="3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="7" value="derived" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#64748b;dashed=1;" edge="1" parent="1" source="3" target="4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#64748b;" edge="1" parent="1" source="3" target="5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

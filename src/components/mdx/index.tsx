@@ -1,9 +1,13 @@
+import { Children, isValidElement } from "react";
 import type { MDXComponents } from "mdx/types";
 import { Adr } from "./adr";
 import { Callout } from "./callout";
 import { CodeBlock } from "./code-block";
 import { DesignNote } from "./design-note";
 import { DocumentOutline } from "./document-outline";
+import { Drawio } from "./drawio";
+import { extractMdxText, isMermaidPre } from "./extract-mdx-text";
+import { Mermaid } from "./mermaid";
 
 export const mdxComponents: MDXComponents = {
   Adr,
@@ -11,6 +15,8 @@ export const mdxComponents: MDXComponents = {
   CodeBlock,
   DesignNote,
   DocumentOutline,
+  Drawio,
+  Mermaid,
   h2: (props) => (
     <h2
       className="text-xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-2xl"
@@ -48,12 +54,22 @@ export const mdxComponents: MDXComponents = {
       {...props}
     />
   ),
-  pre: (props) => (
-    <pre
-      className="overflow-x-auto rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-code)] p-4 text-[13px] leading-relaxed"
-      {...props}
-    />
-  ),
+  pre: (props) => {
+    if (isMermaidPre(props.children)) {
+      const child = Children.toArray(props.children)[0];
+      if (isValidElement<{ children?: React.ReactNode }>(child)) {
+        const chart = extractMdxText(child.props.children);
+        return <Mermaid chart={chart} />;
+      }
+    }
+
+    return (
+      <pre
+        className="overflow-x-auto rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-code)] p-4 text-[13px] leading-relaxed"
+        {...props}
+      />
+    );
+  },
   code: (props) => (
     <code
       className="font-mono text-[var(--text-secondary)] [tab-size:2]"

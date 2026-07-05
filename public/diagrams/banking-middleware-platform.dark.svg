@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" role="img" aria-labelledby="title desc">
+  <title id="title">Banking middleware platform boundary</title>
+  <desc id="desc">Partners and subsidiaries reach domain services through a governed API gateway and policy layer.</desc>
+  <defs>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <filter id="shadow" x="-8%" y="-8%" width="116%" height="124%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <rect width="960" height="420" rx="16" fill="#0a0d14"/>
+  <text x="480" y="34" text-anchor="middle" fill="#94a3b8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" letter-spacing="0.12em">PLATFORM BOUNDARY</text>
+
+  <g filter="url(#shadow)">
+    <rect x="40" y="72" width="150" height="260" rx="12" fill="#111827" stroke="#334155"/>
+    <text x="115" y="104" text-anchor="middle" fill="#e2e8f0" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600">Partners</text>
+    <rect x="58" y="126" width="114" height="36" rx="8" fill="#1e293b" stroke="#475569"/>
+    <text x="115" y="149" text-anchor="middle" fill="#cbd5e1" font-size="12">Fintech APIs</text>
+    <rect x="58" y="176" width="114" height="36" rx="8" fill="#1e293b" stroke="#475569"/>
+    <text x="115" y="199" text-anchor="middle" fill="#cbd5e1" font-size="12">Merchants</text>
+    <rect x="58" y="226" width="114" height="36" rx="8" fill="#1e293b" stroke="#475569"/>
+    <text x="115" y="249" text-anchor="middle" fill="#cbd5e1" font-size="12">Internal apps</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="230" y="72" width="500" height="260" rx="12" fill="#0f172a" stroke="url(#accent)" stroke-width="2"/>
+    <text x="480" y="104" text-anchor="middle" fill="#f8fafc" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" font-weight="700">Banking middleware</text>
+
+    <rect x="252" y="126" width="456" height="52" rx="10" fill="#172554" stroke="#2563eb"/>
+    <text x="480" y="157" text-anchor="middle" fill="#dbeafe" font-size="13" font-weight="600">API gateway  —  auth, rate limits, OpenAPI contracts</text>
+
+    <rect x="252" y="192" width="220" height="52" rx="10" fill="#134e4a" stroke="#10b981"/>
+    <text x="362" y="223" text-anchor="middle" fill="#d1fae5" font-size="12" font-weight="600">Policy &amp; subsidiary rules</text>
+
+    <rect x="488" y="192" width="220" height="52" rx="10" fill="#134e4a" stroke="#10b981"/>
+    <text x="598" y="223" text-anchor="middle" fill="#d1fae5" font-size="12" font-weight="600">Audit &amp; correlation IDs</text>
+
+    <rect x="252" y="258" width="456" height="52" rx="10" fill="#1e293b" stroke="#475569"/>
+    <text x="480" y="289" text-anchor="middle" fill="#e2e8f0" font-size="12">Domain services  —  payments, accounts, limits</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="770" y="72" width="150" height="260" rx="12" fill="#111827" stroke="#334155"/>
+    <text x="845" y="104" text-anchor="middle" fill="#e2e8f0" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600">Core banking</text>
+    <rect x="788" y="146" width="114" height="44" rx="8" fill="#1e293b" stroke="#475569"/>
+    <text x="845" y="173" text-anchor="middle" fill="#cbd5e1" font-size="12">Ledger</text>
+    <rect x="788" y="206" width="114" height="44" rx="8" fill="#1e293b" stroke="#475569"/>
+    <text x="845" y="233" text-anchor="middle" fill="#cbd5e1" font-size="12">Settlement</text>
+    <rect x="788" y="266" width="114" height="44" rx="8" fill="#1e293b" stroke="#475569"/>
+    <text x="845" y="293" text-anchor="middle" fill="#cbd5e1" font-size="12">Compliance</text>
+  </g>
+
+  <path d="M190 202 H230" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M730 202 H770" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <text x="480" y="392" text-anchor="middle" fill="#64748b" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12">Governed boundary  —  no direct partner access to core systems</text>
+</svg>

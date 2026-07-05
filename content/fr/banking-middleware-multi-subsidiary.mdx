@@ -22,3 +22,9 @@ La première décision de conception concerne la responsabilité : qui peut publ
 ## Concevoir pour la variance entre filiales
 
 Les filiales fonctionnent rarement avec les mêmes règles : plafonds, contrôles conformité, SLA partenaires et fenêtres de settlement varient. Gardez ces différences dans des couches de politiques et de configuration, pas dans des services forkés. L'architecture doit rendre les règles locales explicites tout en conservant un socle plateforme commun.
+
+<Drawio
+  src="/diagrams/banking-middleware-platform.drawio"
+  title="Frontière plateforme"
+  caption="Partenaires et filiales passent par une passerelle gouvernée, une couche de politiques et une piste d'audit avant les services domaine ou les adaptateurs core banking."
+/>

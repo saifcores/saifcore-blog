@@ -9,6 +9,16 @@ relatedProjects: [pan-african-payment-sdk]
 
 Les systèmes monétaires cassent cher : doubles débits, settlements coincés dans des états ambigus, tableaux de rapprochement qui divergent de la base de référence. La solution est rarement une base plus grosse — ce sont des frontières explicites entre **initiation**, **autorisation**, **compensation** et **rapprochement**, chacune avec ses invariants et sa piste d'audit.
 
+```mermaid
+flowchart LR
+  Client["Client / partenaire"] --> Gateway["Passerelle API"]
+  Gateway --> Intent["Intention de paiement"]
+  Intent --> Auth["Autorisation"]
+  Auth --> Clear["Compensation"]
+  Clear --> Ledger["Événements grand livre"]
+  Ledger --> Recon["Rapprochement"]
+```
+
 ## Intention de paiement idempotente
 
 Les retries sont inévitables. Le client doit fournir une clé d'idempotence stable ; le serveur doit la traiter comme une clé métier unique, pas comme un en-tête optionnel.

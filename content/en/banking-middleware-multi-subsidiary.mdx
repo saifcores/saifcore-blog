@@ -22,3 +22,9 @@ The first design decision is ownership: who can publish an API, who approves a b
 ## Design for subsidiary variance
 
 Subsidiaries rarely run with identical rules: limits, compliance checks, partner SLAs, and settlement windows vary. Keep those differences in policy and configuration layers, not in forked services. The architecture should make local rules explicit while preserving a shared platform core.
+
+<Drawio
+  src="/diagrams/banking-middleware-platform.drawio"
+  title="Platform boundary"
+  caption="Partners and subsidiaries share a governed gateway, policy layer, and audit trail before domain services or core banking adapters."
+/>

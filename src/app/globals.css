@@ -197,6 +197,107 @@ body {
   color: #94a3b8;
 }
 
+/* Architecture diagrams (Mermaid, Draw.io, SVG exports) */
+.diagram-figure {
+  margin-block: 2rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+}
+
+.diagram-figure-title {
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0.625rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.diagram-figure-body {
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .diagram-figure-body {
+    padding: 1.25rem 1.5rem;
+  }
+}
+
+.diagram-figure-caption {
+  border-top: 1px solid var(--border-subtle);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.diagram-figure-source {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.diagram-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-code);
+  transition: opacity 0.2s ease;
+}
+
+.mermaid-diagram {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.drawio-viewer {
+  position: relative;
+  width: 100%;
+  min-height: 28rem;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-code);
+}
+
+.drawio-viewer-frame {
+  display: block;
+  width: 100%;
+  min-height: 28rem;
+  border: 0;
+  background: transparent;
+}
+
+.diagram-error {
+  margin: 0;
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.08);
+  padding: 0.75rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #fecaca;
+  white-space: pre-wrap;
+}
+
+[data-theme="light"] .diagram-error {
+  color: #b91c1c;
+}
+
 /* Ghost-style post cards (tonux-dev.com inspired) */
 .post-card-image-link {
   isolation: isolate;

@@ -1,0 +1,25 @@
+<mxfile host="app.diagrams.net" agent="SAIFCORE Blog" version="24.7.17">
+  <diagram id="banking-middleware-platform" name="Platform boundary">
+    <mxGraphModel dx="1180" dy="680" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="960" pageHeight="420" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="2" value="Partners" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#475569;fontColor=#e2e8f0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="72" width="150" height="260" as="geometry"/>
+        </mxCell>
+        <mxCell id="3" value="Banking middleware&#xa;API gateway · policy · audit" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#172554;strokeColor=#2563eb;fontColor=#dbeafe;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="230" y="72" width="500" height="260" as="geometry"/>
+        </mxCell>
+        <mxCell id="4" value="Core banking" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#475569;fontColor=#e2e8f0;" vertex="1" parent="1">
+          <mxGeometry x="770" y="72" width="150" height="260" as="geometry"/>
+        </mxCell>
+        <mxCell id="5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#64748b;" edge="1" parent="1" source="2" target="3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#64748b;" edge="1" parent="1" source="3" target="4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

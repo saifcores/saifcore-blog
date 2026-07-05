@@ -9,11 +9,33 @@ relatedProjects: [double-entry-ledger]
 
 Les soldes mutables sont séduisants parce qu'ils sont simples à lire. Ils deviennent dangereux quand l'argent passe par des retries, annulations, callbacks fournisseur et settlements différés. Dès que la finance demande pourquoi un solde a changé, une table de valeur courante ne suffit plus.
 
+## Contexte système
+
+```mermaid
+C4Context
+  title Contexte grand livre plateforme paiement
+  Person(merchant, "Marchand", "Accepte paiements wallet et carte")
+  Person(ops, "Finance et ops", "Rapprochement et audit")
+  System(payment_api, "API Paiement", "Commandes idempotentes et callbacks fournisseur")
+  System_Ext(wallet, "Fournisseur wallet", "Mobile money ou settlement PSP")
+  SystemDb(ledger, "Grand livre partie double", "Journal append-only, source de vérité")
+  Rel(merchant, payment_api, "Crée et confirme les paiements")
+  Rel(payment_api, wallet, "Règle via", "HTTPS")
+  Rel(payment_api, ledger, "Poste des écritures équilibrées")
+  Rel(ops, ledger, "Rapproche depuis le journal")
+```
+
 <Adr
   status="Accepté · 2025-04-12"
   context="La plateforme de paiement doit supporter intégrations wallet, callbacks fournisseur, remboursements, settlement partenaire et rapprochement finance. Les auditeurs ont besoin d'une trace immuable pour chaque mouvement posté."
   decision="Utiliser un grand livre en partie double avec écritures append-only. Chaque mouvement crée des écritures débit et crédit équilibrées dans une transaction ; les soldes dérivés peuvent être cachés, mais le journal reste la source de vérité."
   consequences="Positif : rapprochement et audit deviennent explicables depuis les données. Négatif : les ingénieurs doivent modéliser les événements comptables explicitement, et les écritures exigent une discipline transactionnelle plus forte."
+/>
+
+<Drawio
+  src="/diagrams/double-entry-ledger-context.drawio"
+  title="Journal vs projections"
+  caption="Le journal du grand livre est la source de vérité. Les vues de soldes et caches sont des modèles de lecture dérivés, jamais l'autorité pour l'argent posté."
 />
 
 <Callout variant="warning">

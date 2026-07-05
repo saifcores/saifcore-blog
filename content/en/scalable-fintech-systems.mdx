@@ -9,6 +9,16 @@ relatedProjects: [pan-african-payment-sdk]
 
 Money systems fail expensively: duplicate charges, settlements stuck in ambiguous states, reconciliation spreadsheets that diverge from the database of record. The fix is rarely a bigger database — it is explicit boundaries between **initiation**, **authorization**, **clearing**, and **reconciliation**, each with its own invariants and audit trail.
 
+```mermaid
+flowchart LR
+  Client["Client / partner"] --> Gateway["API gateway"]
+  Gateway --> Intent["Payment intent"]
+  Intent --> Auth["Authorization"]
+  Auth --> Clear["Clearing"]
+  Clear --> Ledger["Ledger events"]
+  Ledger --> Recon["Reconciliation"]
+```
+
 ## Idempotent payment intent
 
 Retries are inevitable. The client must supply a stable idempotency key; the server must treat it as a unique business key, not a nice-to-have header.
