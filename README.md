@@ -99,7 +99,9 @@ ADMIN_PASSWORD=your-secure-password-here
 
 A 403 *"Resource not accessible by personal access token"* on save means the token can read but **cannot write** contents — recreate the PAT with Contents write (or `repo` scope) and SSO authorization.
 
-Locally, CMS writes go to `content/*.mdx` on disk as before.
+Locally, CMS reads and writes use `content/*.mdx` on disk. Set `GITHUB_*` in
+`.env.local` only to validate your token with `npm run cms:check-github`
+before adding the same values to Vercel.
 
 ---
 

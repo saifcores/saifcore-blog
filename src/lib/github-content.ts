@@ -41,11 +41,25 @@ function formatGitHubApiError(
     );
   }
 
+  if (status === 401) {
+    return (
+      `GitHub rejected the ${operation} request: invalid or expired ` +
+      `GITHUB_TOKEN (Bad credentials). Update the token in Vercel env vars ` +
+      `or .env.local for cms:check-github. Raw: ${detail}`
+    );
+  }
+
   return `GitHub API ${status} (${operation}): ${detail}`;
 }
 
-export function isGitHubContentStoreEnabled(): boolean {
+/** Token + repo env vars are set (used for diagnostics and Vercel runtime). */
+export function isGitHubConfigured(): boolean {
   return getGitHubConfig() !== null;
+}
+
+/** Use GitHub as the live content backend (Vercel only — local dev uses disk). */
+export function isGitHubContentStoreEnabled(): boolean {
+  return isGitHubConfigured() && process.env.VERCEL === "1";
 }
 
 export const GITHUB_WRITE_SETUP_HINT =
