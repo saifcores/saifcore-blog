@@ -1,0 +1,49 @@
+---
+title: "Mobile money integration patterns for African fintech"
+excerpt: "Wave, Orange Money, Free Money: the API gaps, callback traps, and idempotency pitfalls that production systems expose — and how to architect around them."
+kind: code
+publishedAt: "2025-03-18"
+tags: [mobile-money, wave, orange-money, fintech]
+relatedProjects: [pan-african-payment-sdk]
+---
+
+Mobile money rails in West Africa are not uniform. Wave, Orange Money, and Free Money each expose different callback semantics, settlement windows, and retry behaviours. A payment marked `SUCCESS` by the provider SDK is not always a settled transaction — and building as though it is will surface as a reconciliation nightmare six months into production.
+
+## The callback problem
+
+Most providers deliver a webhook callback asynchronously — sometimes seconds after the payment, sometimes minutes later, occasionally not at all if the endpoint was unavailable. Your architecture must decouple payment initiation from payment confirmation: store the intent immediately, update state only when a verified callback arrives, and run a reconciliation job that polls the provider status endpoint for any intents still pending after a configurable timeout.
+
+<CodeBlock title="Payment intent state machine — Spring state transitions">{`public enum PaymentStatus {
+  INITIATED, PROVIDER_SENT, PENDING,
+  SUCCESS, FAILED, REFUNDED
+}
+
+@Transactional
+public PaymentIntent handleCallback(CallbackPayload payload) {
+PaymentIntent intent = repository
+.findByProviderRef(payload.getReference())
+.orElseThrow(() -> new UnknownReferenceException(payload.getReference()));
+
+if (intent.getStatus() == PaymentStatus.SUCCESS
+|| intent.getStatus() == PaymentStatus.FAILED) {
+return intent;
+}
+
+intent.setStatus(payload.isSuccessful()
+? PaymentStatus.SUCCESS : PaymentStatus.FAILED);
+intent.setSettledAt(Instant.now());
+auditLog.record(intent, "callback", payload.getRawBody());
+return repository.save(intent);
+}`}</CodeBlock>
+
+<Callout variant="info">
+  Always verify the callback signature against the provider's HMAC key before
+  updating state. Spoofed callbacks that mark a payment as SUCCESS without
+  actual settlement are a real attack vector in the wild.
+</Callout>
+
+## Reconciliation as a first-class job
+
+Run a scheduled reconciliation job — every 5 minutes for active intents, every hour for the prior-day batch. For each intent in `PENDING` status beyond the provider's typical settlement window, query the provider status API directly. Treat divergence as an alert.
+
+The systems that scale to millions of transactions without breaking finance operations are not the ones with the fastest provider integrations — they are the ones where every money state is explicit, observable, and recoverable without manual intervention.

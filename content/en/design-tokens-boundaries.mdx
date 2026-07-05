@@ -1,0 +1,31 @@
+---
+title: "Design tokens at system boundaries"
+excerpt: "Semantic tokens for the design system; product layers only where marketing and UX need to diverge — without breaking engineering or accessibility."
+kind: design
+publishedAt: "2024-11-18"
+tags: [design-system, tokens, accessibility]
+---
+
+<DesignNote>
+  **Principle:** Keep **semantic** tokens (e.g. `--surface-elevated`,
+  `--text-muted`, `--focus-ring`) owned by the design system. Let **product**
+  layers compose those tokens into gradients, campaign skins, or seasonal
+  accents only at **leaf** components — never by forking the core button or
+  input primitives.
+</DesignNote>
+
+When every squad invents a slightly different shade of "primary" for a landing page, you don't have a design system — you have a colour zoo. The boundary is not "design vs code"; it is **semantic stability** vs **contextual expression**.
+
+### Handoff checklist
+
+- Name tokens after **role** (what they do), not after hex or Figma layer names.
+- Document dark-mode pairs next to light in the **same** table — drift hides in separate tables.
+- Ship a JSON (or CSS variables) export that **byte-for-byte** matches what the app consumes.
+- Define focus, contrast, and motion rules at the system level — product skins must not weaken WCAG-critical paths.
+
+<Callout variant="warning">
+  If "brand refresh" requires touching fifty primitives, your tokens were not
+  semantic — they were **aliases** to a single palette.
+</Callout>
+
+When Figma and production diverge, the bug is usually an **implicit third theme** — dark mode, high-contrast, or "marketing only" — that nobody named in the contract between design and engineering.

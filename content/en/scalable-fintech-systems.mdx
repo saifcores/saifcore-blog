@@ -1,0 +1,46 @@
+---
+title: "Designing scalable fintech systems"
+excerpt: "Clear money boundaries, idempotent commands, and ledgers your finance team can reason about — not just a bigger Postgres cluster."
+kind: code
+publishedAt: "2025-01-22"
+tags: [fintech, idempotency, payments]
+relatedProjects: [pan-african-payment-sdk]
+---
+
+Money systems fail expensively: duplicate charges, settlements stuck in ambiguous states, reconciliation spreadsheets that diverge from the database of record. The fix is rarely a bigger database — it is explicit boundaries between **initiation**, **authorization**, **clearing**, and **reconciliation**, each with its own invariants and audit trail.
+
+## Idempotent payment intent
+
+Retries are inevitable. The client must supply a stable idempotency key; the server must treat it as a unique business key, not a nice-to-have header.
+
+<CodeBlock title="Idempotency key on the write command">{`import { randomUUID } from "node:crypto";
+
+type CreatePayment = {
+amount: number;
+currency: string;
+/\*_ Client-generated; retries MUST reuse the same key _/
+idempotencyKey: string;
+};
+
+export async function createPaymentIntent(cmd: CreatePayment) {
+  const existing = await store.findByIdempotencyKey(cmd.idempotencyKey);
+  if (existing) return existing;
+
+const intent = {
+id: randomUUID(),
+...cmd,
+status: "requires_confirmation" as const,
+};
+await store.save(intent);
+return intent;
+}`}</CodeBlock>
+
+<Callout variant="info">
+  At scale, idempotency belongs in your **OpenAPI contract** and your
+  integration tests — not only in a comment. Log the key on every retry with
+  correlation IDs so support can trace a single user action across services.
+</Callout>
+
+## Ledger and reconciliation
+
+If finance cannot explain your ledger model in one whiteboard session, operations will pay the tax forever. Model balances as append-only events where possible; make “why is this amount here?” answerable from data, not tribal knowledge.

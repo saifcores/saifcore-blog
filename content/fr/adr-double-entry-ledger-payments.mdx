@@ -1,0 +1,23 @@
+---
+title: "ADR : pourquoi un grand livre en partie double pour les paiements"
+excerpt: "Une courte ADR pour choisir l'exactitude comptable, l'auditabilité et le rapprochement plutôt qu'une simple table de soldes mutables."
+kind: adr
+publishedAt: "2025-04-12"
+tags: [paiements, grand-livre, fintech]
+relatedProjects: [double-entry-ledger]
+---
+
+Les soldes mutables sont séduisants parce qu'ils sont simples à lire. Ils deviennent dangereux quand l'argent passe par des retries, annulations, callbacks fournisseur et settlements différés. Dès que la finance demande pourquoi un solde a changé, une table de valeur courante ne suffit plus.
+
+<Adr
+  status="Accepté · 2025-04-12"
+  context="La plateforme de paiement doit supporter intégrations wallet, callbacks fournisseur, remboursements, settlement partenaire et rapprochement finance. Les auditeurs ont besoin d'une trace immuable pour chaque mouvement posté."
+  decision="Utiliser un grand livre en partie double avec écritures append-only. Chaque mouvement crée des écritures débit et crédit équilibrées dans une transaction ; les soldes dérivés peuvent être cachés, mais le journal reste la source de vérité."
+  consequences="Positif : rapprochement et audit deviennent explicables depuis les données. Négatif : les ingénieurs doivent modéliser les événements comptables explicitement, et les écritures exigent une discipline transactionnelle plus forte."
+/>
+
+<Callout variant="warning">
+  Un grand livre n'est pas une fonctionnalité de reporting. C'est le contrat qui
+  permet au produit, à la finance, au support et à la conformité de s'accorder
+  sur ce qui est arrivé à l'argent.
+</Callout>

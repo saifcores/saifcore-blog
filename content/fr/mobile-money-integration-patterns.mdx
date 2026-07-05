@@ -1,0 +1,50 @@
+---
+title: "Patterns d'intégration Mobile Money pour la fintech africaine"
+excerpt: "Wave, Orange Money, Free Money : les lacunes d'API, pièges de callback et problèmes d'idempotence que la production expose — et comment architecturer autour."
+kind: code
+publishedAt: "2025-03-18"
+tags: [mobile-money, wave, orange-money, fintech]
+relatedProjects: [pan-african-payment-sdk]
+---
+
+Les rails mobile money en Afrique de l'Ouest ne sont pas uniformes. Wave, Orange Money et Free Money exposent chacun une sémantique de callback, des fenêtres de règlement et des comportements de retry différents. Un paiement marqué `SUCCESS` par le SDK du fournisseur n'est pas toujours une transaction réglée — et construire comme si c'était le cas se manifestera comme un cauchemar de rapprochement six mois en production.
+
+## Le problème du callback
+
+La plupart des fournisseurs livrent un webhook de callback de façon asynchrone — parfois quelques secondes après le paiement, parfois plusieurs minutes plus tard, et parfois jamais si l'endpoint était indisponible. Votre architecture doit découpler l'initiation du paiement de la confirmation : stocker l'intention immédiatement, mettre à jour l'état uniquement quand un callback vérifié arrive, et exécuter un job de rapprochement qui interroge l'endpoint de statut du fournisseur pour toute intention encore en attente après un timeout configurable.
+
+<CodeBlock title="Machine d'état de l'intention de paiement — transitions Spring">{`public enum PaymentStatus {
+  INITIATED, PROVIDER_SENT, PENDING,
+  SUCCESS, FAILED, REFUNDED
+}
+
+@Transactional
+public PaymentIntent handleCallback(CallbackPayload payload) {
+PaymentIntent intent = repository
+.findByProviderRef(payload.getReference())
+.orElseThrow(() -> new UnknownReferenceException(payload.getReference()));
+
+if (intent.getStatus() == PaymentStatus.SUCCESS
+|| intent.getStatus() == PaymentStatus.FAILED) {
+return intent;
+}
+
+intent.setStatus(payload.isSuccessful()
+? PaymentStatus.SUCCESS : PaymentStatus.FAILED);
+intent.setSettledAt(Instant.now());
+auditLog.record(intent, "callback", payload.getRawBody());
+return repository.save(intent);
+}`}</CodeBlock>
+
+<Callout variant="info">
+  Vérifiez toujours la signature du callback contre la clé HMAC du fournisseur
+  avant de mettre à jour l'état. Les callbacks falsifiés qui marquent un
+  paiement comme SUCCESS sans règlement réel sont un vecteur d'attaque concret
+  dans la pratique.
+</Callout>
+
+## Le rapprochement comme job de première classe
+
+Exécutez un job de rapprochement planifié — toutes les 5 minutes pour les intentions actives, toutes les heures pour le lot du jour précédent. Pour chaque intention en statut `PENDING` au-delà de la fenêtre de règlement typique du fournisseur, interrogez directement l'API de statut du fournisseur. Traitez toute divergence comme une alerte.
+
+Les systèmes qui passent à des millions de transactions sans briser les opérations financières ne sont pas ceux qui ont les intégrations fournisseur les plus rapides — ce sont ceux où chaque état monétaire est explicite, observable et récupérable sans intervention manuelle.

@@ -1,0 +1,25 @@
+---
+title: "Why most SaaS fail in Africa"
+excerpt: "Beyond the landing page: payments, distribution, and trust assumptions that don't survive first contact with the market."
+kind: writing
+publishedAt: "2025-02-10"
+tags: [saas, africa, fintech]
+relatedProjects: [ecom-360-pme]
+---
+
+A playbook built for card-first economies, same-day logistics, and stable FX will mislead you the moment you optimize for a market where mobile money, agent networks, and cash still shape user behaviour. The product roadmap is rarely the first thing that breaks — it is the invisible stack around it: how money moves, how disputes get resolved, and how trust is earned without a decade of brand history.
+
+Teams that "copy San Francisco" often under-index on last-mile reality: KYC rules that differ by corridor, settlement windows that don't line up with payroll cycles, or partner APIs that return success while the user's wallet is still pending. Your architecture has to make those states visible — not paper over them with a generic spinner.
+
+## What to design for instead
+
+Start from observable constraints: which payment rails your ICP actually uses, what "good" latency means on 3G, and which compliance artefacts auditors will ask for in year two, not demo day. Instrument adoption and failure paths the same way you instrument revenue — ambiguous funnels hide structural gaps that no feature flag will fix.
+
+<Callout variant="info">
+  Rule of thumb: if your runbook for "payment stuck" is a Slack ping to a human,
+  you don't yet have a payments architecture — you have a script. Automate
+  detection, idempotent retries, and customer-visible status before you scale
+  spend.
+</Callout>
+
+The goal is not to romanticize local complexity — it is to build systems honest enough to degrade gracefully when the network is flaky, regulation shifts mid-quarter, or your champion leaves the account. That's the bar for SaaS that survives contact with reality.

@@ -1,0 +1,47 @@
+---
+title: "Concevoir des systèmes fintech à l'échelle"
+excerpt: "Frontières claires autour de l'argent, commandes idempotentes et grands livres compréhensibles par la finance — pas seulement un Postgres plus gros."
+kind: code
+publishedAt: "2025-01-22"
+tags: [fintech, idempotence, paiements]
+relatedProjects: [pan-african-payment-sdk]
+---
+
+Les systèmes monétaires cassent cher : doubles débits, settlements coincés dans des états ambigus, tableaux de rapprochement qui divergent de la base de référence. La solution est rarement une base plus grosse — ce sont des frontières explicites entre **initiation**, **autorisation**, **compensation** et **rapprochement**, chacune avec ses invariants et sa piste d'audit.
+
+## Intention de paiement idempotente
+
+Les retries sont inévitables. Le client doit fournir une clé d'idempotence stable ; le serveur doit la traiter comme une clé métier unique, pas comme un en-tête optionnel.
+
+<CodeBlock title="Clé d'idempotence sur la commande d'écriture">{`import { randomUUID } from "node:crypto";
+
+type CreatePayment = {
+amount: number;
+currency: string;
+/\*_ Générée côté client ; les retries DOIVENT réutiliser la même clé _/
+idempotencyKey: string;
+};
+
+export async function createPaymentIntent(cmd: CreatePayment) {
+  const existing = await store.findByIdempotencyKey(cmd.idempotencyKey);
+  if (existing) return existing;
+
+const intent = {
+id: randomUUID(),
+...cmd,
+status: "requires_confirmation" as const,
+};
+await store.save(intent);
+return intent;
+}`}</CodeBlock>
+
+<Callout variant="info">
+  À grande échelle, l'idempotence doit figurer dans votre **contrat OpenAPI** et
+  vos tests d'intégration — pas seulement dans un commentaire. Journalisez la
+  clé à chaque retry avec des correlation IDs pour retracer une action
+  utilisateur de bout en bout.
+</Callout>
+
+## Grand livre et rapprochement
+
+Si la finance ne peut pas expliquer votre grand livre en une session tableau blanc, l'opération paiera la taxe pour toujours. Modélisez les soldes en événements append-only quand c'est possible ; rendez « pourquoi ce montant est-il là ? » vérifiable depuis les données, pas le savoir tacite.

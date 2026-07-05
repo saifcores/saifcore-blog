@@ -1,0 +1,31 @@
+---
+title: "Design tokens aux frontières du système"
+excerpt: "Tokens sémantiques pour le design system ; couches produit seulement là où marketing et UX doivent diverger — sans casser l'ingénierie ni l'accessibilité."
+kind: design
+publishedAt: "2024-11-18"
+tags: [design-system, tokens, accessibilité]
+---
+
+<DesignNote>
+  **Principe :** gardez les tokens **sémantiques** (ex. `--surface-elevated`,
+  `--text-muted`, `--focus-ring`) sous la responsabilité du design system.
+  Laissez les couches **produit** composer ces tokens en dégradés, skins de
+  campagne ou accents saisonniers uniquement sur les **composants feuilles** —
+  jamais en forkant les primitives bouton ou champ de base.
+</DesignNote>
+
+Quand chaque squad invente une nuance de « primaire » pour une landing, vous n'avez pas un design system — vous avez un zoo de couleurs. La frontière n'est pas « design vs code » ; c'est **stabilité sémantique** vs **expression contextuelle**.
+
+### Checklist de handoff
+
+- Nommez les tokens d'après le **rôle** (ce qu'ils font), pas d'après le hex ou le nom de calque Figma.
+- Documentez les paires dark à côté du light dans le **même** tableau — la dérive se cache dans les tableaux séparés.
+- Livrez un export JSON (ou variables CSS) qui correspond **à l'identique** à ce que l'app consomme.
+- Définissez focus, contraste et mouvement au niveau système — les skins produit ne doivent pas fragiliser les parcours critiques WCAG.
+
+<Callout variant="warning">
+  Si un « refresh marque » impose de toucher cinquante primitives, vos tokens
+  n'étaient pas sémantiques — c'étaient des **alias** vers une palette unique.
+</Callout>
+
+Quand Figma et la prod divergent, le bug est souvent un **troisième thème implicite** — mode sombre, contraste élevé, ou « marketing » — que personne n'a nommé dans le contrat design ↔ ingénierie.

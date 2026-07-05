@@ -1,0 +1,20 @@
+---
+title: "Des revues d'architecture qui servent vraiment"
+excerpt: "Moins de slides, de décisions plus nettes : les ADR comme contrat entre équipes — pas un concours de schémas."
+kind: adr
+publishedAt: "2024-12-05"
+tags: [architecture, adr, gouvernance]
+---
+
+Les revues déraillent quand la salle optimise pour **paraître** compétent plutôt que pour **réduire** le risque. On en sort avec une invitation au calendrier et un malaise vague — pas une décision qui survivra au prochain recrutement. Une revue utile est courte, adversariale dans le bon sens, et se termine avec des responsables et des dates.
+
+<Adr
+  status="Accepté · 2024-12-05"
+  context="Les équipes passaient des demi-journées en forums d'architecture sans décision tracée. Le produit avait besoin d'un alignement plus rapide sur les arbitrages (latence vs coût vs conformité) sans faire monter chaque choix en comité."
+  decision="Adopter une ADR d'une page par décision significative : contexte (avec liens), décision, conséquences (positives et négatives), et un seul déclencheur explicite de révision (seuil de métrique, date ou événement réglementaire). Les revues de plus de 45 minutes sont découpées ou annulées."
+  consequences="Positif : les décisions sont consultables dans Git ; les nouveaux lisent l'historique au lieu du folklore. Négatif : exige de la discipline pour mettre à jour le statut quand les hypothèses changent ; accepté n'est pas éternel sans déclencheur."
+/>
+
+Les bonnes revues ont un ordre du jour publié, un sceptique désigné, et des suites qui tiennent dans le sprint suivant — pas un parking lot qui n'atterrit jamais. Les ADR fonctionnent quand elles répondent à trois questions : qu'a-t-on décidé, pourquoi, et qu'est-ce qui rouvrirait le débat ?
+
+Ce format s'adapte aussi bien à une équipe en amorçage qu'à une organisation à plusieurs métiers — parce qu'il optimise la clarté et la mémoire, pas le nombre de slides.

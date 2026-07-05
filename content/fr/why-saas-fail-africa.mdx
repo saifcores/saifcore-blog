@@ -1,0 +1,25 @@
+---
+title: "Pourquoi tant de SaaS échouent en Afrique"
+excerpt: "Au-delà de la landing : paiements, distribution et hypothèses de confiance qui ne résistent pas au contact du terrain."
+kind: writing
+publishedAt: "2025-02-10"
+tags: [saas, afrique, fintech]
+relatedProjects: [ecom-360-pme]
+---
+
+Une recette pensée pour des économies où la carte domine, la logistique est prévisible et le change est stable vous induira en erreur dès que vous optimisez pour un marché où l'argent mobile, les réseaux d'agents et le liquide structurent encore le comportement. Ce n'est souvent pas la roadmap produit qui lâche en premier — c'est la stack invisible autour : comment l'argent circule, comment on tranche un litige, comment on gagne la confiance sans dix ans de notoriété.
+
+Les équipes qui « copient la Silicon Valley » sous-pondèrent souvent le dernier kilomètre : exigences KYC qui varient selon les corridors, fenêtres de settlement qui ne coïncident pas avec la paie, ou APIs partenaires qui renvoient un succès alors que le portefeuille de l'utilisateur est encore en attente. Votre architecture doit rendre ces états visibles — pas les masquer derrière un spinner générique.
+
+## Sur quoi concevoir à la place
+
+Partez de contraintes observables : quels rails de paiement votre ICP utilise vraiment, ce que signifie une « bonne » latence en 3G, et quels artefacts de conformité les auditeurs exigeront en année deux, pas au jour du pitch. Instrumentez l'adoption et les échecs comme vous instrumentez le revenu — les entonnoirs flous masquent des écarts structurels qu'aucun feature flag ne réparera.
+
+<Callout variant="info">
+  Règle pratique : si votre runbook « paiement bloqué » se résume à un ping
+  Slack vers un humain, vous n'avez pas encore une architecture de paiement —
+  vous avez un script. Automatisez la détection, les retries idempotents et un
+  statut lisible côté client avant de monter en dépense.
+</Callout>
+
+L'objectif n'est pas de romanticiser la complexité locale — c'est de bâtir des systèmes assez honnêtes pour dégrader proprement quand le réseau capricie, que la réglementation pivote en milieu de trimestre, ou que votre sponsor quitte le compte. C'est la barre pour un SaaS qui tient au contact du réel.

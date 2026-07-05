@@ -1,0 +1,20 @@
+---
+title: "Architecture reviews that actually help"
+excerpt: "Fewer slides, clearer decisions: ADRs as a contract between teams — not a beauty contest for diagrams."
+kind: adr
+publishedAt: "2024-12-05"
+tags: [architecture, adr, governance]
+---
+
+Reviews derail when the room optimizes for **being seen** as smart instead of **reducing** risk. The output is a calendar invite and a vague sense of unease — not a decision that survives the next hiring wave. A useful review is short, adversarial in the right way, and ends with owners and dates.
+
+<Adr
+  status="Accepted · 2024-12-05"
+  context="Engineering squads were spending half-day sessions in architecture forums that produced no recorded decision. Product needed faster alignment on trade-offs (latency vs. cost vs. compliance) without escalating every choice to a committee."
+  decision="Adopt a one-page ADR per material decision: context (with links), decision, consequences (positive and negative), and a single explicit revisit-when trigger (metric threshold, date, or regulatory event). Reviews longer than 45 minutes are split or cancelled."
+  consequences="Positive: decisions are searchable in Git; new hires read history instead of lore. Negative: requires discipline to update status when assumptions change; accepted is not forever without a trigger."
+/>
+
+Good reviews have a published agenda, a designated sceptic, and follow-ups that fit into the next sprint — not a parking lot that never lands. ADRs work when they answer three questions: what did we decide, why, and what would make us reopen the discussion?
+
+This format scales from seed-stage teams to orgs with multiple business lines — because it optimizes for clarity and memory, not for slide count.

@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Override global gitignore rules that ignore any `lib/` directory
+!/src/lib/
+!/src/lib/**

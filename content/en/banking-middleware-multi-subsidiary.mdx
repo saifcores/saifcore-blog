@@ -1,0 +1,24 @@
+---
+title: "Designing a banking middleware for multi-subsidiary organizations"
+excerpt: "How to protect core banking systems while exposing governed APIs, partner integrations, and observable money flows across multiple entities."
+kind: writing
+publishedAt: "2025-04-28"
+tags: [banking, middleware, api-gateway]
+relatedProjects: [unified-api-gateway]
+---
+
+A multi-subsidiary bank does not need another thin API layer. It needs a controlled boundary between fragile core systems, fast-moving product teams, and external partners. The middleware has to normalize identity, contracts, rate limits, audit trails, and operational visibility without becoming a dumping ground for every exception.
+
+## Start from governance, not endpoints
+
+The first design decision is ownership: who can publish an API, who approves a breaking change, and where the canonical OpenAPI contract lives. Once this is explicit, the gateway can enforce versioning, authentication, input validation, and request correlation before traffic reaches domain services or the core banking adapter.
+
+<Callout variant="info">
+  A banking middleware is successful when incidents become traceable: partner
+  request, gateway decision, domain event, core response, and audit record all
+  share the same correlation story.
+</Callout>
+
+## Design for subsidiary variance
+
+Subsidiaries rarely run with identical rules: limits, compliance checks, partner SLAs, and settlement windows vary. Keep those differences in policy and configuration layers, not in forked services. The architecture should make local rules explicit while preserving a shared platform core.

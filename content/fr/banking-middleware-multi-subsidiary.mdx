@@ -1,0 +1,24 @@
+---
+title: "Concevoir un middleware bancaire multi-filiales"
+excerpt: "Comment protéger les systèmes core banking tout en exposant des APIs gouvernées, des intégrations partenaires et des flux financiers observables sur plusieurs entités."
+kind: writing
+publishedAt: "2025-04-28"
+tags: [banque, middleware, api-gateway]
+relatedProjects: [unified-api-gateway]
+---
+
+Une banque multi-filiales n'a pas besoin d'une simple couche API de plus. Elle a besoin d'une frontière contrôlée entre des systèmes core fragiles, des équipes produit qui avancent vite et des partenaires externes. Le middleware doit normaliser identité, contrats, rate limits, audit et visibilité opérationnelle sans devenir le réceptacle de toutes les exceptions.
+
+## Commencer par la gouvernance, pas par les endpoints
+
+La première décision de conception concerne la responsabilité : qui peut publier une API, qui valide un breaking change et où vit le contrat OpenAPI canonique. Une fois cela explicite, la passerelle peut appliquer versioning, authentification, validation des entrées et corrélation des requêtes avant que le trafic n'atteigne les services domaine ou l'adaptateur core banking.
+
+<Callout variant="info">
+  Un middleware bancaire réussit quand les incidents deviennent traçables :
+  requête partenaire, décision gateway, événement domaine, réponse core et trace
+  d'audit racontent la même histoire de corrélation.
+</Callout>
+
+## Concevoir pour la variance entre filiales
+
+Les filiales fonctionnent rarement avec les mêmes règles : plafonds, contrôles conformité, SLA partenaires et fenêtres de settlement varient. Gardez ces différences dans des couches de politiques et de configuration, pas dans des services forkés. L'architecture doit rendre les règles locales explicites tout en conservant un socle plateforme commun.
