@@ -14,6 +14,7 @@ import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { routing } from "@/i18n/routing";
+import { DEFAULT_OG_IMAGE } from "@/seo";
 import { getSiteUrl } from "@/site";
 
 const geistSans = Geist({
@@ -60,6 +61,21 @@ export async function generateMetadata({
     },
     description: t("description"),
     applicationName: "SAIFCORE Blog",
+    icons: {
+      icon: [{ url: "/icon.png", sizes: "32x32", type: "image/png" }],
+      apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+    },
+    openGraph: {
+      siteName: "SAIFCORE Blog",
+      type: "website",
+      images: [
+        { url: DEFAULT_OG_IMAGE, width: 800, height: 800, alt: "SAIFCORE" },
+      ],
+    },
+    twitter: {
+      card: "summary",
+      images: [DEFAULT_OG_IMAGE],
+    },
     alternates: {
       types: {
         "application/rss+xml": [
@@ -91,6 +107,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <body

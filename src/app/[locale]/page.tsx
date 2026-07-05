@@ -68,8 +68,13 @@ export default async function HomePage({ params }: Props) {
 
       <section className="page-container py-16 sm:py-20">
         <div className="post-card-grid grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post) => (
-            <ArticleCard key={post.slug} post={post} locale={loc} />
+          {posts.map((post, index) => (
+            <ArticleCard
+              key={post.slug}
+              post={post}
+              locale={loc}
+              priority={index < 3}
+            />
           ))}
         </div>
       </section>

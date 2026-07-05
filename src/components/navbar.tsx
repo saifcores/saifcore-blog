@@ -37,7 +37,7 @@ export async function Navbar() {
         </Link>
 
         <nav
-          className="hidden items-center gap-5 md:flex"
+          className="hidden items-center gap-5 sm:flex"
           aria-label={t("primary")}
         >
           <Link

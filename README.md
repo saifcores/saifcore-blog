@@ -1,36 +1,119 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SAIFCORE Blog
 
-## Getting Started
+Bilingual engineering publication for **SAIFCORE** — architecture guides, ADRs, and fintech insights. Built with **Next.js 16**, **MDX**, and **next-intl** (English / French).
 
-First, run the development server:
+Companion to the portfolio at [saifcore.tech](https://saifcore.tech).
+
+---
+
+## Features
+
+| Area         | Details                                                               |
+| ------------ | --------------------------------------------------------------------- |
+| **Content**  | MDX articles in `content/en/` and `content/fr/`                       |
+| **Diagrams** | Mermaid (flowcharts, C4) and Draw.io (`.drawio` + themed SVG exports) |
+| **Covers**   | Auto-generated SVG illustrations per article                          |
+| **i18n**     | English (default) and French (`/` vs `/fr`)                           |
+| **Theme**    | Light / dark / system with themed diagram variants                    |
+| **RSS**      | `/feed.xml` (EN) and `/fr/feed.xml` (FR)                              |
+| **SEO**      | Per-page metadata, JSON-LD (`BlogPosting`), sitemap, robots           |
+
+---
+
+## Getting started
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Command                   | Description                                                      |
+| ------------------------- | ---------------------------------------------------------------- |
+| `npm run dev`             | Development server                                               |
+| `npm run build`           | Sync icons, generate covers, export diagrams, production build   |
+| `npm run start`           | Serve production build                                           |
+| `npm run lint`            | ESLint                                                           |
+| `npm run sync:icons`      | Resize `public/profile.png` → 32×32 favicon + 180×180 Apple icon |
+| `npm run diagrams:export` | Export stale `.drawio` files to SVG via `drawio-headless`        |
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Environment variables
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Variable                    | Purpose                                         |
+| --------------------------- | ----------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL`      | Blog origin (e.g. `https://blog.saifcore.tech`) |
+| `NEXT_PUBLIC_PORTFOLIO_URL` | Portfolio link (e.g. `https://saifcore.tech`)   |
+| `NEXT_PUBLIC_CALENDLY_URL`  | Optional “Book a call” button                   |
+| `NEXT_PUBLIC_LINKEDIN_URL`  | Footer link                                     |
+| `NEXT_PUBLIC_GITHUB_URL`    | Footer link                                     |
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Adding content
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### New article
+
+1. Create `content/en/my-slug.mdx` and `content/fr/my-slug.mdx`
+2. Frontmatter: `title`, `excerpt`, `kind`, `publishedAt`, `tags`
+3. Restart dev server — slug is picked up automatically
+
+### Mermaid
+
+````mdx
+```mermaid
+flowchart LR
+  A --> B
+```
+````
+
+Or `<Mermaid title="...">` component.
+
+### Draw.io
+
+1. Save source to `public/diagrams/my-diagram.drawio`
+2. Export light SVG → `my-diagram.svg`
+3. Export dark SVG → `my-diagram.dark.svg` (optional)
+4. In MDX: `<Drawio src="/diagrams/my-diagram.drawio" title="..." />`
+
+Run `npm run diagrams:export` to auto-export SVG from `.drawio` files.
+
+---
+
+## Project structure
+
+```
+content/{en,fr}/          MDX articles
+public/
+  profile.png             Avatar + favicon source
+  diagrams/               Draw.io sources + SVG exports
+  images/articles/        Generated cover illustrations
+src/
+  app/[locale]/           Pages (home, articles/[slug])
+  components/mdx/         MDX components (Adr, Mermaid, Drawio, …)
+  lib/posts.ts            Content loader
+scripts/
+  generate-covers.mjs     Cover SVG generator (runs on build)
+  export-drawio.mjs       Draw.io → SVG export
+```
+
+---
+
+## Deployment
+
+1. Deploy to Vercel with `NEXT_PUBLIC_SITE_URL=https://blog.saifcore.tech`
+2. Set `NEXT_PUBLIC_BLOG_URL=https://blog.saifcore.tech` on the **portfolio** repo
+3. Redeploy portfolio so article teasers link to the blog
+
+---
+
+## License
+
+Private — © SAIFCORE

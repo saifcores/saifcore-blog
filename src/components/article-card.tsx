@@ -7,9 +7,10 @@ import type { PostMeta } from "@/lib/types";
 type Props = {
   post: PostMeta;
   locale: "en" | "fr";
+  priority?: boolean;
 };
 
-export async function ArticleCard({ post, locale }: Props) {
+export async function ArticleCard({ post, locale, priority = false }: Props) {
   const t = await getTranslations("articles");
   const href = `/articles/${post.slug}`;
   const coverSrc = getArticleCover(post.slug, post.cover);
@@ -35,6 +36,7 @@ export async function ArticleCard({ post, locale }: Props) {
           alt=""
           fill
           unoptimized
+          priority={priority}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="post-card-image object-cover"
         />

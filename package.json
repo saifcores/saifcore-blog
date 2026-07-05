@@ -5,8 +5,9 @@
   "description": "SAIFCORE engineering blog — architecture guides, ADRs, and fintech insights",
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/generate-covers.mjs && node scripts/export-drawio.mjs && next build",
+    "build": "npm run sync:icons && node scripts/generate-covers.mjs && node scripts/export-drawio.mjs && next build",
     "diagrams:export": "node scripts/export-drawio.mjs",
+    "sync:icons": "node scripts/sync-icons.mjs",
     "start": "next start",
     "lint": "eslint"
   },

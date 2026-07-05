@@ -7,7 +7,7 @@ import { ArticleCover } from "@/components/article-cover";
 import { Link } from "@/i18n/navigation";
 import { getAllPostParams, getPostBySlug } from "@/lib/posts";
 import { renderMdx } from "@/lib/mdx";
-import { buildPageMetadata } from "@/seo";
+import { buildArticleJsonLd, buildPageMetadata } from "@/seo";
 import { getPortfolioUrl } from "@/site";
 
 type Props = {
@@ -62,12 +62,25 @@ export default async function ArticlePage({ params }: Props) {
     consequencesLabel: t("adrConsequences"),
   });
 
+  const articleJsonLd = buildArticleJsonLd({
+    locale: loc,
+    slug: post.meta.slug,
+    title: post.meta.title,
+    excerpt: post.meta.excerpt,
+    publishedAt: post.meta.publishedAt,
+    coverImage: post.meta.coverImage,
+  });
+
   return (
     <main
       id="main-content"
       className="flex-1 pb-16 outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
       tabIndex={-1}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       <article className="border-b border-[var(--border-subtle)]">
         <header className="page-container py-12 sm:py-16">
           <Link
