@@ -7,6 +7,7 @@ const kindClass: Record<ArticleKind, string> = {
   design: "border-violet-500/35 bg-violet-500/10 text-violet-200/95",
   adr: "border-amber-500/35 bg-amber-500/10 text-amber-200/95",
   document: "border-sky-500/35 bg-sky-500/10 text-sky-200/95",
+  reflection: "border-rose-500/35 bg-rose-500/10 text-rose-200/95",
 };
 
 export function ArticleKindBadge({

@@ -131,6 +131,46 @@ const covers = {
     <rect x="440" y="470" width="300" height="40" rx="8" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="1"/>
     <text x="590" y="496" text-anchor="middle" fill="#34d399" font-size="13">ONE PAGE · BEFORE DIAGRAMS</text>
   </g>`,
+
+  "reflection-subjects": `
+  <g filter="url(#glow)">
+    <circle cx="600" cy="320" r="120" fill="none" stroke="url(#brand)" stroke-width="2" opacity="0.5"/>
+    <circle cx="600" cy="320" r="80" fill="rgba(244,63,94,0.12)" stroke="#f43f5e" stroke-width="2"/>
+    <text x="600" y="310" text-anchor="middle" fill="#fda4af" font-size="20" font-weight="700">REFLECT</text>
+    <text x="600" y="340" text-anchor="middle" fill="#94a3b8" font-size="13">craft · context · lessons</text>
+    <text x="420" y="200" fill="#64748b" font-size="12">Africa</text>
+    <text x="780" y="200" fill="#64748b" font-size="12">Leadership</text>
+    <text x="400" y="440" fill="#64748b" font-size="12">Money ethics</text>
+    <text x="760" y="440" fill="#64748b" font-size="12">Delivery</text>
+  </g>`,
+
+  "loneliness-of-the-payment-engineer": `
+  <g filter="url(#glow)">
+    <circle cx="420" cy="280" r="36" fill="rgba(37,99,235,0.2)" stroke="#2563eb" stroke-width="2"/>
+    <text x="420" y="286" text-anchor="middle" fill="#93c5fd" font-size="11">LEDGER</text>
+    <circle cx="600" cy="240" r="44" fill="rgba(244,63,94,0.15)" stroke="#f43f5e" stroke-width="2"/>
+    <text x="600" y="246" text-anchor="middle" fill="#fda4af" font-size="12" font-weight="700">YOU</text>
+    <circle cx="780" cy="280" r="36" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="2"/>
+    <text x="780" y="286" text-anchor="middle" fill="#6ee7b7" font-size="11">CALLBACK</text>
+    <path d="M456 280 H564 M636 280 H744" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-dasharray="6 4"/>
+    <rect x="480" y="380" width="240" height="80" rx="10" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1"/>
+    <text x="600" y="418" text-anchor="middle" fill="#fcd34d" font-size="13">TICKET · 02:14</text>
+    <text x="600" y="520" text-anchor="middle" fill="#94a3b8" font-size="14">ONE THREAD · THREE AUDIENCES</text>
+  </g>`,
+
+  "when-success-is-not-settled": `
+  <g filter="url(#glow)">
+    <rect x="280" y="220" width="200" height="100" rx="12" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="2"/>
+    <text x="380" y="265" text-anchor="middle" fill="#fcd34d" font-size="16" font-weight="700">SUCCESS</text>
+    <text x="380" y="295" text-anchor="middle" fill="#94a3b8" font-size="11">provider callback</text>
+    <text x="600" y="270" text-anchor="middle" fill="#64748b" font-size="28">≠</text>
+    <rect x="720" y="220" width="200" height="100" rx="12" fill="rgba(16,185,129,0.15)" stroke="#10b981" stroke-width="2"/>
+    <text x="820" y="265" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">SETTLED</text>
+    <text x="820" y="295" text-anchor="middle" fill="#94a3b8" font-size="11">finance match</text>
+    <path d="M380 340 L380 400 L820 400 L820 340" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" stroke-dasharray="8 4"/>
+    <text x="600" y="430" text-anchor="middle" fill="#93c5fd" font-size="13">ACK → CAPTURED → SETTLED</text>
+    <text x="600" y="500" text-anchor="middle" fill="#94a3b8" font-size="14">SPLIT STATES · ONE TRUTH</text>
+  </g>`,
 };
 
 fs.mkdirSync(OUT, { recursive: true });

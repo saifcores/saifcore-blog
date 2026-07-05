@@ -1,4 +1,10 @@
-export type ArticleKind = "writing" | "code" | "design" | "adr" | "document";
+export type ArticleKind =
+  | "writing"
+  | "code"
+  | "design"
+  | "adr"
+  | "document"
+  | "reflection";
 
 export type PostFrontmatter = {
   title: string;

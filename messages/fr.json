@@ -40,7 +40,8 @@
       "code": "Exemple de code",
       "design": "Rationale design",
       "adr": "Décision d'architecture",
-      "document": "Document de référence"
+      "document": "Document de référence",
+      "reflection": "Réflexion"
     },
     "adrStatus": "Statut actuel",
     "adrContext": "Contexte & arrière-plan",
