@@ -141,9 +141,11 @@ export function ArticleEditor({ mode, initialSlug, initialPair }: Props) {
 
       if (!response.ok) {
         setErrors(
-          data.errors?.map((item) => `${item.field}: ${item.message}`) ?? [
-            data.error ?? "Save failed.",
-          ],
+          data.errors?.map((item) =>
+            item.field === "_"
+              ? item.message
+              : `${item.field}: ${item.message}`,
+          ) ?? [data.error ?? "Save failed."],
         );
         return;
       }

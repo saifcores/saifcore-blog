@@ -16,14 +16,14 @@ type Props = {
 
 export const dynamic = "force-dynamic";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
   return getAllPostParams();
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
   const loc = locale === "fr" ? "fr" : "en";
-  const post = getPostBySlug(loc, slug);
+  const post = await getPostBySlug(loc, slug);
   if (!post || post.meta.draft) return {};
 
   return buildPageMetadata({
@@ -41,7 +41,7 @@ export default async function ArticlePage({ params }: Props) {
   const { locale, slug } = await params;
   setRequestLocale(locale as Locale);
   const loc = locale === "fr" ? "fr" : "en";
-  const post = getPostBySlug(loc, slug);
+  const post = await getPostBySlug(loc, slug);
 
   if (!post || post.meta.draft) {
     notFound();

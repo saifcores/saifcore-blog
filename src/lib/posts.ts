@@ -1,31 +1,10 @@
-import fs from "node:fs";
-import path from "node:path";
 import matter from "gray-matter";
 import readingTime from "reading-time";
 import { getArticleCover } from "./article-covers";
+import { listMdxSlugs, readMdxSource } from "./content-store";
 import type { Post, PostMeta } from "./types";
 
-const contentRoot = path.join(process.cwd(), "content");
-
-function localeDir(locale: string): string {
-  return path.join(contentRoot, locale);
-}
-
-export function getPostSlugs(locale: string): string[] {
-  const dir = localeDir(locale);
-  if (!fs.existsSync(dir)) return [];
-
-  return fs
-    .readdirSync(dir)
-    .filter((file) => file.endsWith(".mdx"))
-    .map((file) => file.replace(/\.mdx$/, ""));
-}
-
-export function getPostBySlug(locale: string, slug: string): Post | null {
-  const filePath = path.join(localeDir(locale), `${slug}.mdx`);
-  if (!fs.existsSync(filePath)) return null;
-
-  const raw = fs.readFileSync(filePath, "utf8");
+function parsePost(slug: string, raw: string): Post {
   const { data, content } = matter(raw);
   const stats = readingTime(content);
 
@@ -47,26 +26,47 @@ export function getPostBySlug(locale: string, slug: string): Post | null {
   };
 }
 
-export function getAllPosts(locale: string): PostMeta[] {
-  return getPostSlugs(locale)
-    .map((slug) => getPostBySlug(locale, slug))
+export async function getPostSlugs(locale: string): Promise<string[]> {
+  return listMdxSlugs(locale);
+}
+
+export async function getPostBySlug(
+  locale: string,
+  slug: string,
+): Promise<Post | null> {
+  const raw = await readMdxSource(locale, slug);
+  if (!raw) return null;
+  return parsePost(slug, raw);
+}
+
+export async function getAllPosts(locale: string): Promise<PostMeta[]> {
+  const slugs = await getPostSlugs(locale);
+  const posts = await Promise.all(
+    slugs.map((slug) => getPostBySlug(locale, slug)),
+  );
+
+  return posts
     .filter((post): post is Post => post !== null)
     .map((post) => post.meta)
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
 }
 
 /** Published posts only — excludes drafts from public listings. */
-export function getPublishedPosts(locale: string): PostMeta[] {
-  return getAllPosts(locale).filter((post) => !post.draft);
+export async function getPublishedPosts(locale: string): Promise<PostMeta[]> {
+  const posts = await getAllPosts(locale);
+  return posts.filter((post) => !post.draft);
 }
 
-export function getAllPostParams(): { locale: string; slug: string }[] {
+export async function getAllPostParams(): Promise<
+  { locale: string; slug: string }[]
+> {
   const locales = ["en", "fr"] as const;
   const params: { locale: string; slug: string }[] = [];
 
   for (const locale of locales) {
-    for (const slug of getPostSlugs(locale)) {
-      const post = getPostBySlug(locale, slug);
+    const slugs = await getPostSlugs(locale);
+    for (const slug of slugs) {
+      const post = await getPostBySlug(locale, slug);
       if (post && !post.meta.draft) {
         params.push({ locale, slug });
       }

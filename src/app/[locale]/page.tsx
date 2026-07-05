@@ -32,7 +32,7 @@ export default async function HomePage({ params }: Props) {
   setRequestLocale(locale as Locale);
   const t = await getTranslations("home");
   const loc = locale === "fr" ? "fr" : "en";
-  const posts = getPublishedPosts(loc);
+  const posts = await getPublishedPosts(loc);
   const portfolioUrl = getPortfolioUrl();
 
   return (

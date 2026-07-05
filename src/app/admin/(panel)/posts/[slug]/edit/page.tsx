@@ -8,7 +8,7 @@ type Props = {
 
 export default async function EditArticlePage({ params }: Props) {
   const { slug } = await params;
-  const pair = getAdminPostPair(slug);
+  const pair = await getAdminPostPair(slug);
 
   if (!pair.locales.en && !pair.locales.fr) {
     notFound();

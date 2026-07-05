@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { getAllPostParams } from "@/lib/posts";
 import { getSiteUrl } from "@/site";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
   const entries: MetadataRoute.Sitemap = [
     {
@@ -19,7 +19,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  for (const { locale, slug } of getAllPostParams()) {
+  for (const { locale, slug } of await getAllPostParams()) {
     const prefix = locale === "en" ? "" : `/${locale}`;
     entries.push({
       url: `${siteUrl}${prefix}/articles/${slug}`,

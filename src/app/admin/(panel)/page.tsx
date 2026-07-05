@@ -2,8 +2,8 @@ import Link from "next/link";
 import { getAllAdminPosts } from "@/lib/posts-admin";
 import { ArticleKindBadge } from "@/components/article-kind-badge";
 
-export default function AdminDashboardPage() {
-  const posts = getAllAdminPosts();
+export default async function AdminDashboardPage() {
+  const posts = await getAllAdminPosts();
 
   return (
     <div>

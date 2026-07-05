@@ -4,7 +4,7 @@ import { buildRssFeed } from "@/lib/rss";
 import { getSiteUrl } from "@/site";
 
 export async function GET() {
-  const posts = getPublishedPosts("fr");
+  const posts = await getPublishedPosts("fr");
   const t = await getTranslations({ locale: "fr", namespace: "home" });
   const siteUrl = getSiteUrl();
 

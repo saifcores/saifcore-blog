@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getAllAdminPosts, saveAdminPostPair } from "@/lib/posts-admin";
 import { isAdminAuthenticated, unauthorizedResponse } from "@/lib/admin-auth";
 import { ADMIN_LOCALES } from "@/lib/admin-constants";
+import {
+  contentStoreNotConfiguredMessage,
+  isProductionWithoutContentStore,
+} from "@/lib/content-store-config";
 import { validateFrontmatter, validateSlug } from "@/lib/post-validation";
 import { revalidateBlogContent } from "@/lib/revalidate-content";
 import type { LocaleCode, PostFrontmatter } from "@/lib/types";
@@ -20,11 +24,18 @@ type CreateBody = {
 
 export async function GET() {
   if (!(await isAdminAuthenticated())) return unauthorizedResponse();
-  return NextResponse.json({ posts: getAllAdminPosts() });
+  return NextResponse.json({ posts: await getAllAdminPosts() });
 }
 
 export async function POST(request: Request) {
   if (!(await isAdminAuthenticated())) return unauthorizedResponse();
+
+  if (isProductionWithoutContentStore()) {
+    return NextResponse.json(
+      { errors: [{ field: "_", message: contentStoreNotConfiguredMessage() }] },
+      { status: 503 },
+    );
+  }
 
   const body = (await request.json()) as CreateBody;
   const slugError = validateSlug(body.slug);
@@ -33,7 +44,8 @@ export async function POST(request: Request) {
   }
 
   for (const locale of ADMIN_LOCALES) {
-    if (getPostSlugs(locale).includes(body.slug)) {
+    const slugs = await getPostSlugs(locale);
+    if (slugs.includes(body.slug)) {
       return NextResponse.json(
         { errors: [{ field: "slug", message: "Slug already exists." }] },
         { status: 409 },
@@ -56,10 +68,18 @@ export async function POST(request: Request) {
     );
   }
 
-  saveAdminPostPair(body.slug, toSave);
-  revalidateBlogContent(body.slug);
-
-  return NextResponse.json({ ok: true, slug: body.slug });
+  try {
+    await saveAdminPostPair(body.slug, toSave);
+    revalidateBlogContent(body.slug);
+    return NextResponse.json({ ok: true, slug: body.slug });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to create article.";
+    return NextResponse.json(
+      { errors: [{ field: "_", message }] },
+      { status: 500 },
+    );
+  }
 }
 
 function collectLocaleErrors(

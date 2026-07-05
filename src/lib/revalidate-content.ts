@@ -1,7 +1,9 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 /** Invalidate public blog caches after CMS writes. */
 export function revalidateBlogContent(slug: string): void {
+  revalidateTag("github-mdx", "max");
+  revalidateTag("github-mdx-list", "max");
   revalidatePath("/", "layout");
   revalidatePath("/fr", "layout");
   revalidatePath(`/articles/${slug}`);

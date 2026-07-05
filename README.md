@@ -11,7 +11,7 @@ Companion to the portfolio at [saifcore.tech](https://saifcore.tech).
 | Area          | Details                                                                                                   |
 | ------------- | --------------------------------------------------------------------------------------------------------- |
 | **Content**   | MDX articles in `content/en/` and `content/fr/` — kinds: writing, code, design, adr, document, reflection |
-| **Admin CMS** | `/admin` — password-protected editor for bilingual MDX (local dev)                                        |
+| **Admin CMS** | `/admin` — password-protected editor; writes to disk locally or GitHub on Vercel                          |
 | **Diagrams**  | Mermaid (flowcharts, C4) and Draw.io (`.drawio` + themed SVG exports)                                     |
 | **Covers**    | Auto-generated SVG illustrations per article                                                              |
 | **i18n**      | English (default) and French (`/` vs `/fr`)                                                               |
@@ -48,14 +48,17 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Environment variables
 
-| Variable                    | Purpose                                         |
-| --------------------------- | ----------------------------------------------- |
-| `NEXT_PUBLIC_SITE_URL`      | Blog origin (e.g. `https://blog.saifcore.tech`) |
-| `NEXT_PUBLIC_PORTFOLIO_URL` | Portfolio link (e.g. `https://saifcore.tech`)   |
-| `NEXT_PUBLIC_CALENDLY_URL`  | Optional “Book a call” button                   |
-| `NEXT_PUBLIC_LINKEDIN_URL`  | Footer link                                     |
-| `NEXT_PUBLIC_GITHUB_URL`    | Footer link                                     |
-| `ADMIN_PASSWORD`            | Admin CMS password (required for `/admin`)      |
+| Variable                    | Purpose                                              |
+| --------------------------- | ---------------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL`      | Blog origin (e.g. `https://blog.saifcore.tech`)      |
+| `NEXT_PUBLIC_PORTFOLIO_URL` | Portfolio link (e.g. `https://saifcore.tech`)        |
+| `NEXT_PUBLIC_CALENDLY_URL`  | Optional “Book a call” button                        |
+| `NEXT_PUBLIC_LINKEDIN_URL`  | Footer link                                          |
+| `NEXT_PUBLIC_GITHUB_URL`    | Footer link                                          |
+| `ADMIN_PASSWORD`            | Admin CMS password (required for `/admin`)           |
+| `GITHUB_TOKEN`              | GitHub PAT with repo **Contents** write (Vercel CMS) |
+| `GITHUB_REPO`               | Repo slug, e.g. `saifcores/saifcore-blog`            |
+| `GITHUB_BRANCH`             | Branch for CMS commits (default: `main`)             |
 
 ---
 
@@ -79,7 +82,9 @@ ADMIN_PASSWORD=your-secure-password-here
 
 **Drafts** are hidden from the public site, RSS, and sitemap until published.
 
-> **Production note:** Vercel’s filesystem is read-only. The CMS writes to `content/*.mdx` on disk — use it locally, then commit and deploy. For in-production editing, wire a Git API or external storage later.
+> **Production (Vercel):** The server filesystem is read-only. Set `GITHUB_TOKEN`, `GITHUB_REPO`, and optionally `GITHUB_BRANCH` so saves commit MDX to GitHub. Without these, the admin UI loads but save/update returns an error.
+
+Locally, CMS writes go to `content/*.mdx` on disk as before.
 
 ---
 
@@ -139,8 +144,9 @@ scripts/
 ## Deployment
 
 1. Deploy to Vercel with `NEXT_PUBLIC_SITE_URL=https://blog.saifcore.tech`
-2. Set `NEXT_PUBLIC_BLOG_URL=https://blog.saifcore.tech` on the **portfolio** repo
-3. Redeploy portfolio so article teasers link to the blog
+2. Set `ADMIN_PASSWORD`, `GITHUB_TOKEN`, and `GITHUB_REPO=saifcores/saifcore-blog` in Vercel env vars
+3. Set `NEXT_PUBLIC_BLOG_URL=https://blog.saifcore.tech` on the **portfolio** repo
+4. Redeploy portfolio so article teasers link to the blog
 
 ---
 
