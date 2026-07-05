@@ -1,7 +1,12 @@
 import matter from "gray-matter";
 import readingTime from "reading-time";
 import { getArticleCover } from "./article-covers";
-import { listMdxSlugs, readMdxSource } from "./content-store";
+import {
+  listMdxSlugs,
+  readMdxSource,
+  listMdxSlugsSync,
+  readMdxSourceSync,
+} from "./content-store";
 import type { Post, PostMeta } from "./types";
 
 function parsePost(slug: string, raw: string): Post {
@@ -70,6 +75,24 @@ export async function getAllPostParams(): Promise<
       if (post && !post.meta.draft) {
         params.push({ locale, slug });
       }
+    }
+  }
+
+  return params;
+}
+
+/** Sync build-time params from repo filesystem (used by generateStaticParams). */
+export function getAllPostParamsSync(): { locale: string; slug: string }[] {
+  const locales = ["en", "fr"] as const;
+  const params: { locale: string; slug: string }[] = [];
+
+  for (const locale of locales) {
+    for (const slug of listMdxSlugsSync(locale)) {
+      const raw = readMdxSourceSync(locale, slug);
+      if (!raw) continue;
+      const { data } = matter(raw);
+      if (data.draft === true) continue;
+      params.push({ locale, slug });
     }
   }
 
