@@ -1,0 +1,65 @@
+{
+  "meta": {
+    "title": "SAIFCORE Blog — Payments, Backend Architecture & Fintech",
+    "description": "Architecture guides, ADRs, and engineering insights on payment rails, distributed backends, and resilient fintech platforms."
+  },
+  "common": {
+    "skipToContent": "Skip to content"
+  },
+  "theme": {
+    "toggle": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "nav": {
+    "primary": "Primary navigation",
+    "articles": "Articles",
+    "portfolio": "Portfolio",
+    "language": "Language",
+    "localeEn": "English",
+    "localeFr": "Français",
+    "bookCall": "Book a call"
+  },
+  "home": {
+    "metaTitle": "Articles & Deep Dives | SAIFCORE Blog",
+    "metaDescription": "In-depth engineering articles on payments, backend architecture, and financial systems — distilled from real-world fintech launches.",
+    "title": "Articles & Insights",
+    "subtitle": "Architecture guides, ADRs, and practical techniques from designing payment rails, distributed backends, and resilient platforms in Africa and beyond.",
+    "portfolioCta": "View portfolio",
+    "portfolioHint": "Case studies, services, and experience on saifcore.tech"
+  },
+  "articles": {
+    "readArticle": "Read article",
+    "readMore": "Read more",
+    "author": "SAIFCORE",
+    "backToArticles": "← All articles",
+    "published": "Published",
+    "kinds": {
+      "writing": "Insight",
+      "code": "Code Example",
+      "design": "Design Rationale",
+      "adr": "Architecture Decision",
+      "document": "Reference Doc"
+    },
+    "adrStatus": "Current Status",
+    "adrContext": "Background & Context",
+    "adrDecision": "Final Decision",
+    "adrConsequences": "Tradeoffs & Consequences",
+    "endCtaTitle": "Want to apply this on your platform?",
+    "endCtaSubtitle": "Describe your tech landscape and constraints — I'll offer straightforward advice if there's a technical match.",
+    "endCtaButton": "Get in touch",
+    "endCtaPortfolio": "View portfolio"
+  },
+  "footer": {
+    "tagline": "Architecture guides and engineering insights on payments, fintech, and enterprise backends.",
+    "rights": "© {year} Saïfoulaye DIALLO · SAIFCORE Blog",
+    "exploreLabel": "Explore",
+    "connectLabel": "Connect",
+    "articles": "Articles",
+    "portfolio": "Portfolio",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "rss": "RSS Feed"
+  }
+}
