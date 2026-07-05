@@ -19,11 +19,160 @@ function getGitHubConfig() {
   return { token, owner, name, branch };
 }
 
+function tokenKind(token: string): string {
+  if (token.startsWith("github_pat_")) return "fine-grained";
+  if (token.startsWith("ghp_")) return "classic";
+  if (token.startsWith("gho_")) return "oauth";
+  return "unknown";
+}
+
+function formatGitHubApiError(
+  status: number,
+  detail: string,
+  operation: string,
+): string {
+  if (status === 403 && detail.includes("Resource not accessible")) {
+    return (
+      `GitHub rejected the ${operation} request: your token cannot write ` +
+      `repository contents. Create a new PAT with Contents read/write on ` +
+      `GITHUB_REPO (fine-grained) or the repo scope (classic). If the repo ` +
+      `is in an organization, authorize the token for SSO under GitHub ` +
+      `Settings → Personal access tokens. Raw: ${detail}`
+    );
+  }
+
+  return `GitHub API ${status} (${operation}): ${detail}`;
+}
+
 export function isGitHubContentStoreEnabled(): boolean {
   return getGitHubConfig() !== null;
 }
 
-async function githubRequest<T>(path: string, init?: RequestInit): Promise<T> {
+export const GITHUB_WRITE_SETUP_HINT =
+  "Create a PAT with Contents read/write on GITHUB_REPO (fine-grained) or " +
+  "the repo scope (classic). For org repos like saifcores/*, set Resource " +
+  "owner to the organization (saifcores), not your personal account. " +
+  "Authorize the token for SSO under GitHub Settings → Personal access tokens.";
+
+type GitHubRepoMeta = {
+  permissions?: {
+    pull?: boolean;
+    push?: boolean;
+    admin?: boolean;
+  };
+};
+
+export type GitHubCmsDiagnostics = {
+  configured: boolean;
+  repo?: string;
+  branch?: string;
+  tokenKind?: string;
+  canRead?: boolean;
+  canPush?: boolean;
+  canWriteContents?: boolean;
+  readyForCmsWrites: boolean;
+  issues: string[];
+};
+
+export async function getGitHubCmsDiagnostics(): Promise<GitHubCmsDiagnostics> {
+  const config = getGitHubConfig();
+  if (!config) {
+    return {
+      configured: false,
+      readyForCmsWrites: false,
+      issues: ["GITHUB_TOKEN and GITHUB_REPO are not set."],
+    };
+  }
+
+  const repo = `${config.owner}/${config.name}`;
+  const issues: string[] = [];
+
+  try {
+    const meta = await githubRequest<GitHubRepoMeta>(
+      `/repos/${config.owner}/${config.name}`,
+      undefined,
+      "check repository access",
+    );
+
+    const canRead = meta.permissions?.pull === true;
+    const canPush = meta.permissions?.push === true;
+
+    if (!canRead) {
+      issues.push(
+        "Token cannot read the repository (missing pull/Contents read).",
+      );
+    }
+    if (!canPush) {
+      issues.push(
+        "Token cannot push to the repository (missing Contents write or repo scope).",
+      );
+      issues.push(GITHUB_WRITE_SETUP_HINT);
+    }
+
+    let canWriteContents: boolean | undefined;
+    if (canRead) {
+      const probe = await probeContentsWrite();
+      canWriteContents = probe.ok;
+      if (!probe.ok) {
+        issues.push(
+          probe.error ??
+            "Contents API write probe failed (PUT returned an error).",
+        );
+        if (canPush) {
+          issues.push(
+            "Repository metadata shows push access, but Contents API writes " +
+              "still fail. For org-owned repos, recreate the token with " +
+              "Resource owner = saifcores and Contents Read and write.",
+          );
+        }
+        issues.push(GITHUB_WRITE_SETUP_HINT);
+      }
+    }
+
+    return {
+      configured: true,
+      repo,
+      branch: config.branch,
+      tokenKind: tokenKind(config.token),
+      canRead,
+      canPush,
+      canWriteContents,
+      readyForCmsWrites: canWriteContents === true,
+      issues,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    issues.push(message);
+    if (message.includes("403")) {
+      issues.push(GITHUB_WRITE_SETUP_HINT);
+    }
+
+    return {
+      configured: true,
+      repo,
+      branch: config.branch,
+      tokenKind: tokenKind(config.token),
+      readyForCmsWrites: false,
+      issues,
+    };
+  }
+}
+
+export async function assertGitHubWriteAccess(): Promise<void> {
+  if (!isGitHubContentStoreEnabled()) return;
+
+  const diagnostics = await getGitHubCmsDiagnostics();
+  if (diagnostics.readyForCmsWrites) return;
+
+  const detail = diagnostics.issues.join(" ");
+  throw new Error(`GitHub token is not ready for CMS writes. ${detail}`);
+}
+
+async function githubRequest<T>(
+  path: string,
+  init?: RequestInit,
+  operation = "request",
+): Promise<T> {
   const config = getGitHubConfig();
   if (!config) {
     throw new Error("GitHub content store is not configured.");
@@ -41,7 +190,7 @@ async function githubRequest<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`GitHub API ${response.status}: ${detail}`);
+    throw new Error(formatGitHubApiError(response.status, detail, operation));
   }
 
   if (response.status === 204) {
@@ -62,6 +211,54 @@ function encodeRepoPath(path: string): string {
     .join("/");
 }
 
+/** PUT the same file content back to verify Contents API write access. */
+async function probeContentsWrite(): Promise<{ ok: boolean; error?: string }> {
+  const config = getGitHubConfig();
+  if (!config) return { ok: false, error: "GitHub is not configured." };
+
+  try {
+    const slugs = await listGitHubMdxSlugs("en");
+    const slug = slugs[0];
+    if (!slug) {
+      return {
+        ok: false,
+        error: "No EN MDX files found to probe write access.",
+      };
+    }
+
+    const filePath = mdxPath("en", slug);
+    const existing = await githubRequest<GitHubContentFile>(
+      `/repos/${config.owner}/${config.name}/contents/${encodeRepoPath(filePath)}?ref=${encodeURIComponent(config.branch)}`,
+      undefined,
+      "probe read file",
+    );
+
+    if (!existing.content || !existing.sha) {
+      return { ok: false, error: "Could not read probe file from GitHub." };
+    }
+
+    await githubRequest(
+      `/repos/${config.owner}/${config.name}/contents/${encodeRepoPath(filePath)}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: "cms: write access probe",
+          content: existing.content,
+          branch: config.branch,
+          sha: existing.sha,
+        }),
+      },
+      "probe write file",
+    );
+
+    return { ok: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { ok: false, error: message };
+  }
+}
+
 export async function readGitHubMdx(
   locale: string,
   slug: string,
@@ -74,6 +271,8 @@ export async function readGitHubMdx(
   try {
     const file = await githubRequest<GitHubContentFile>(
       `/repos/${config.owner}/${config.name}/contents/${encodeRepoPath(path)}?ref=${encodeURIComponent(config.branch)}`,
+      undefined,
+      "read file",
     );
 
     if (!file.content || file.encoding !== "base64") {
@@ -98,6 +297,8 @@ export async function listGitHubMdxSlugs(locale: string): Promise<string[]> {
   try {
     const entries = await githubRequest<GitHubContentFile[]>(
       `/repos/${config.owner}/${config.name}/contents/${encodeRepoPath(dirPath)}?ref=${encodeURIComponent(config.branch)}`,
+      undefined,
+      "list directory",
     );
 
     return entries
@@ -125,31 +326,150 @@ export async function writeGitHubMdx(
 
   const path = mdxPath(locale, slug);
   let sha: string | undefined;
+  let readStep = "pending";
+
+  // #region agent log
+  fetch("http://127.0.0.1:7491/ingest/95632c63-416d-4373-aa76-e496270218b5", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "47c565",
+    },
+    body: JSON.stringify({
+      sessionId: "47c565",
+      location: "github-content.ts:writeGitHubMdx:entry",
+      message: "GitHub write started",
+      data: {
+        locale,
+        slug,
+        repo: `${config.owner}/${config.name}`,
+        branch: config.branch,
+        path,
+        tokenKind: tokenKind(config.token),
+      },
+      timestamp: Date.now(),
+      hypothesisId: "A",
+    }),
+  }).catch(() => {});
+  // #endregion
 
   try {
+    readStep = "get-sha";
     const existing = await githubRequest<GitHubContentFile>(
       `/repos/${config.owner}/${config.name}/contents/${encodeRepoPath(path)}?ref=${encodeURIComponent(config.branch)}`,
+      undefined,
+      "read file for update",
     );
     sha = existing.sha;
+    readStep = "got-sha";
+
+    // #region agent log
+    fetch("http://127.0.0.1:7491/ingest/95632c63-416d-4373-aa76-e496270218b5", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "47c565",
+      },
+      body: JSON.stringify({
+        sessionId: "47c565",
+        location: "github-content.ts:writeGitHubMdx:read-ok",
+        message: "GitHub read for SHA succeeded",
+        data: { slug, locale, hasSha: Boolean(sha) },
+        timestamp: Date.now(),
+        hypothesisId: "B",
+      }),
+    }).catch(() => {});
+    // #endregion
   } catch (error) {
+    readStep = "read-failed";
     if (!(error instanceof Error && error.message.includes("404"))) {
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7491/ingest/95632c63-416d-4373-aa76-e496270218b5",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "47c565",
+          },
+          body: JSON.stringify({
+            sessionId: "47c565",
+            location: "github-content.ts:writeGitHubMdx:read-fail",
+            message: "GitHub read failed before write",
+            data: {
+              slug,
+              locale,
+              error: error instanceof Error ? error.message : String(error),
+            },
+            timestamp: Date.now(),
+            hypothesisId: "B",
+          }),
+        },
+      ).catch(() => {});
+      // #endregion
       throw error;
     }
+    readStep = "new-file";
   }
 
-  await githubRequest(
-    `/repos/${config.owner}/${config.name}/contents/${encodeRepoPath(path)}`,
-    {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
+  try {
+    await githubRequest(
+      `/repos/${config.owner}/${config.name}/contents/${encodeRepoPath(path)}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message,
+          content: Buffer.from(raw, "utf8").toString("base64"),
+          branch: config.branch,
+          ...(sha ? { sha } : {}),
+        }),
+      },
+      "write file",
+    );
+
+    // #region agent log
+    fetch("http://127.0.0.1:7491/ingest/95632c63-416d-4373-aa76-e496270218b5", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "47c565",
+      },
       body: JSON.stringify({
-        message,
-        content: Buffer.from(raw, "utf8").toString("base64"),
-        branch: config.branch,
-        ...(sha ? { sha } : {}),
+        sessionId: "47c565",
+        location: "github-content.ts:writeGitHubMdx:write-ok",
+        message: "GitHub write succeeded",
+        data: { slug, locale, readStep },
+        timestamp: Date.now(),
+        hypothesisId: "C",
       }),
-    },
-  );
+    }).catch(() => {});
+    // #endregion
+  } catch (error) {
+    // #region agent log
+    fetch("http://127.0.0.1:7491/ingest/95632c63-416d-4373-aa76-e496270218b5", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "47c565",
+      },
+      body: JSON.stringify({
+        sessionId: "47c565",
+        location: "github-content.ts:writeGitHubMdx:write-fail",
+        message: "GitHub write failed",
+        data: {
+          slug,
+          locale,
+          readStep,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        timestamp: Date.now(),
+        hypothesisId: "C",
+      }),
+    }).catch(() => {});
+    // #endregion
+    throw error;
+  }
 }
 
 export async function deleteGitHubMdx(
@@ -168,6 +488,8 @@ export async function deleteGitHubMdx(
   try {
     const existing = await githubRequest<GitHubContentFile>(
       `/repos/${config.owner}/${config.name}/contents/${encodeRepoPath(path)}?ref=${encodeURIComponent(config.branch)}`,
+      undefined,
+      "read file for delete",
     );
     sha = existing.sha;
   } catch (error) {
@@ -188,6 +510,7 @@ export async function deleteGitHubMdx(
         branch: config.branch,
       }),
     },
+    "delete file",
   );
 
   return true;

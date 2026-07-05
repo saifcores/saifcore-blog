@@ -12,6 +12,7 @@ import {
 } from "@/lib/content-store-config";
 import { validateFrontmatter } from "@/lib/post-validation";
 import { revalidateBlogContent } from "@/lib/revalidate-content";
+import { assertGitHubWriteAccess } from "@/lib/github-content";
 import type { LocaleCode, PostFrontmatter } from "@/lib/types";
 
 type LocalePayload = {
@@ -97,6 +98,7 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 
   try {
+    await assertGitHubWriteAccess();
     await saveAdminPostPair(slug, toSave);
     revalidateBlogContent(slug);
 

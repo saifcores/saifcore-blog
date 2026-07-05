@@ -84,6 +84,21 @@ ADMIN_PASSWORD=your-secure-password-here
 
 > **Production (Vercel):** The server filesystem is read-only. Set `GITHUB_TOKEN`, `GITHUB_REPO`, and optionally `GITHUB_BRANCH` so saves commit MDX to GitHub. Without these, the admin UI loads but save/update returns an error.
 
+**GitHub PAT setup (required for CMS writes):**
+
+1. GitHub → **Settings** → **Developer settings** → **Personal access tokens**
+2. **Fine-grained token** (recommended):
+   - **Resource owner:** `saifcores` (the organization — not your personal account)
+   - Repository access: **Only select repositories** → `saifcores/saifcore-blog`
+   - Permissions → **Contents: Read and write**
+   - Permissions → **Metadata: Read** (default)
+3. **Classic token** (alternative): enable the **`repo`** scope
+4. If the repo is under an organization, open the token and click **Configure SSO** → **Authorize**
+5. Add to Vercel env: `GITHUB_TOKEN`, `GITHUB_REPO=saifcores/saifcore-blog`, `GITHUB_BRANCH=main`
+6. Redeploy after saving env vars
+
+A 403 *"Resource not accessible by personal access token"* on save means the token can read but **cannot write** contents — recreate the PAT with Contents write (or `repo` scope) and SSO authorization.
+
 Locally, CMS writes go to `content/*.mdx` on disk as before.
 
 ---

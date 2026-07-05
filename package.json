@@ -9,7 +9,8 @@
     "diagrams:export": "node scripts/export-drawio.mjs",
     "sync:icons": "node scripts/sync-icons.mjs",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "cms:check-github": "node scripts/check-github-cms.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

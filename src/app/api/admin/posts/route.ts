@@ -8,6 +8,7 @@ import {
 } from "@/lib/content-store-config";
 import { validateFrontmatter, validateSlug } from "@/lib/post-validation";
 import { revalidateBlogContent } from "@/lib/revalidate-content";
+import { assertGitHubWriteAccess } from "@/lib/github-content";
 import type { LocaleCode, PostFrontmatter } from "@/lib/types";
 import { getPostSlugs } from "@/lib/posts";
 
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    await assertGitHubWriteAccess();
     await saveAdminPostPair(body.slug, toSave);
     revalidateBlogContent(body.slug);
     return NextResponse.json({ ok: true, slug: body.slug });
