@@ -76,33 +76,7 @@ export async function persistMdxSource(
   raw: string,
   message: string,
 ): Promise<void> {
-  const useGitHub = isGitHubContentStoreEnabled();
-
-  const persistDebug = {
-    locale,
-    slug,
-    useGitHub,
-    vercel: process.env.VERCEL === "1",
-  };
-  console.info("[cms-debug] persistMdxSource", persistDebug);
-  fetch("http://127.0.0.1:7491/ingest/95632c63-416d-4373-aa76-e496270218b5", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "47c565",
-    },
-    body: JSON.stringify({
-      sessionId: "47c565",
-      location: "content-store.ts:persistMdxSource",
-      message: "Persist MDX",
-      data: persistDebug,
-      timestamp: Date.now(),
-      hypothesisId: "B",
-    }),
-  }).catch(() => {});
-  // #endregion
-
-  if (useGitHub) {
+  if (isGitHubContentStoreEnabled()) {
     await writeGitHubMdx(locale, slug, raw, message);
     return;
   }
