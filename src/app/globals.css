@@ -1,26 +1,233 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-base: #0a0a0a;
+  --bg-elevated: #111111;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg-code: #0a0d14;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.16);
+  --border-code: rgba(255, 255, 255, 0.06);
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --accent-blue: #2563eb;
+  --accent-emerald: #10b981;
+  --accent-blue-light: #3b82f6;
+  --accent-text: #60a5fa;
+  --focus-ring: rgba(59, 130, 246, 0.28);
+  --glow-primary: rgba(37, 99, 235, 0.3);
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-dropdown: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg-base: #f0f2f6;
+  --bg-elevated: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.88);
+  --bg-code: #0f1419;
+  --border-subtle: rgba(15, 23, 42, 0.1);
+  --border-hover: rgba(37, 99, 235, 0.28);
+  --border-code: rgba(255, 255, 255, 0.08);
+  --text-primary: #0c0c12;
+  --text-secondary: #3f3f46;
+  --text-muted: #64748b;
+  --accent-blue: #2563eb;
+  --accent-emerald: #10b981;
+  --accent-blue-light: #1d4ed8;
+  --accent-text: #2563eb;
+  --focus-ring: rgba(37, 99, 235, 0.22);
+  --glow-primary: rgba(37, 99, 235, 0.2);
+  --shadow-card: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --shadow-dropdown: 0 12px 32px rgba(15, 23, 42, 0.12);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-bg-base: var(--bg-base);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html {
+  scroll-behavior: smooth;
+  overflow-x: clip;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }
 
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  transition:
+    background-color 0.28s ease,
+    color 0.2s ease;
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.65;
+  overflow-x: clip;
+}
+
+@media (min-width: 640px) {
+  body {
+    font-size: 17px;
+  }
+}
+
+.page-container {
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+  .page-container {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-container {
+    padding-inline: 2rem;
+  }
+}
+
+.section-y {
+  padding-block: 4rem;
+}
+
+@media (min-width: 640px) {
+  .section-y {
+    padding-block: 5rem;
+  }
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.28);
+  color: var(--text-primary);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #2563eb 0%, #10b981 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-emerald));
+  font-weight: 600;
+  color: #ffffff;
+  box-shadow: 0 0 24px -6px var(--glow-primary);
+  transition:
+    filter 0.2s ease,
+    transform 0.15s ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.btn-outline {
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-elevated) 50%, transparent);
+  color: var(--text-primary);
+  backdrop-filter: blur(8px);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.28s ease;
+}
+
+.btn-outline:hover {
+  border-color: var(--border-hover);
+  background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
+}
+
+.text-accent {
+  color: var(--accent-text);
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+[data-theme="light"] .bg-grid {
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.04) 1px, transparent 1px);
+}
+
+.prose-article {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .prose-article {
+    gap: 2rem;
+  }
+}
+
+.code-block figcaption {
+  color: #94a3b8;
+}
+
+/* Ghost-style post cards (tonux-dev.com inspired) */
+.post-card-image-link {
+  isolation: isolate;
+}
+
+.post-card-image {
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.post-card:hover .post-card-image,
+.post-card:focus-within .post-card-image {
+  transform: scale(1.06);
+}
+
+.post-card-title a {
+  text-decoration: none;
+}
+
+.post-card-excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-card-image {
+    transition: none;
+  }
+
+  .post-card:hover .post-card-image,
+  .post-card:focus-within .post-card-image {
+    transform: none;
+  }
 }
