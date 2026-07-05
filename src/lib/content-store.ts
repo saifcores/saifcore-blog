@@ -98,11 +98,3 @@ export async function removeMdxSource(
   fs.unlinkSync(filePath);
   return true;
 }
-
-export function readMdxSourceSync(locale: string, slug: string): string | null {
-  return readFilesystemMdx(locale, slug);
-}
-
-export function listMdxSlugsSync(locale: string): string[] {
-  return listFilesystemSlugs(locale);
-}

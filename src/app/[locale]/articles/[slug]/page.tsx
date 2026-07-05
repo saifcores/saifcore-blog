@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { ArticleKindBadge } from "@/components/article-kind-badge";
 import { ArticleCover } from "@/components/article-cover";
 import { Link } from "@/i18n/navigation";
-import { getAllPostParamsSync, getPostBySlug } from "@/lib/posts";
+import { getPostBySlug } from "@/lib/posts";
 import { renderMdx } from "@/lib/mdx";
 import { buildArticleJsonLd, buildPageMetadata } from "@/seo";
 import { getPortfolioUrl } from "@/site";
@@ -15,10 +15,6 @@ type Props = {
 };
 
 export const dynamic = "force-dynamic";
-
-export function generateStaticParams() {
-  return getAllPostParamsSync();
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
