@@ -17,7 +17,7 @@ type Props = {
 export const dynamic = "force-dynamic";
 
 export async function generateStaticParams() {
-  return await getAllPostParams();
+  return getAllPostParams();
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
