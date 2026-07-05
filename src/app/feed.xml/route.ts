@@ -1,10 +1,10 @@
 import { getTranslations } from "next-intl/server";
-import { getAllPosts } from "@/lib/posts";
+import { getPublishedPosts } from "@/lib/posts";
 import { buildRssFeed } from "@/lib/rss";
 import { getSiteUrl } from "@/site";
 
 export async function GET() {
-  const posts = getAllPosts("en");
+  const posts = getPublishedPosts("en");
   const t = await getTranslations({ locale: "en", namespace: "home" });
   const siteUrl = getSiteUrl();
 

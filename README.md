@@ -8,15 +8,16 @@ Companion to the portfolio at [saifcore.tech](https://saifcore.tech).
 
 ## Features
 
-| Area         | Details                                                               |
-| ------------ | --------------------------------------------------------------------- |
-| **Content**  | MDX articles in `content/en/` and `content/fr/`                       |
-| **Diagrams** | Mermaid (flowcharts, C4) and Draw.io (`.drawio` + themed SVG exports) |
-| **Covers**   | Auto-generated SVG illustrations per article                          |
-| **i18n**     | English (default) and French (`/` vs `/fr`)                           |
-| **Theme**    | Light / dark / system with themed diagram variants                    |
-| **RSS**      | `/feed.xml` (EN) and `/fr/feed.xml` (FR)                              |
-| **SEO**      | Per-page metadata, JSON-LD (`BlogPosting`), sitemap, robots           |
+| Area          | Details                                                                                                   |
+| ------------- | --------------------------------------------------------------------------------------------------------- |
+| **Content**   | MDX articles in `content/en/` and `content/fr/` — kinds: writing, code, design, adr, document, reflection |
+| **Admin CMS** | `/admin` — password-protected editor for bilingual MDX (local dev)                                        |
+| **Diagrams**  | Mermaid (flowcharts, C4) and Draw.io (`.drawio` + themed SVG exports)                                     |
+| **Covers**    | Auto-generated SVG illustrations per article                                                              |
+| **i18n**      | English (default) and French (`/` vs `/fr`)                                                               |
+| **Theme**     | Light / dark / system with themed diagram variants                                                        |
+| **RSS**       | `/feed.xml` (EN) and `/fr/feed.xml` (FR)                                                                  |
+| **SEO**       | Per-page metadata, JSON-LD (`BlogPosting`), sitemap, robots                                               |
 
 ---
 
@@ -54,6 +55,31 @@ Open [http://localhost:3000](http://localhost:3000).
 | `NEXT_PUBLIC_CALENDLY_URL`  | Optional “Book a call” button                   |
 | `NEXT_PUBLIC_LINKEDIN_URL`  | Footer link                                     |
 | `NEXT_PUBLIC_GITHUB_URL`    | Footer link                                     |
+| `ADMIN_PASSWORD`            | Admin CMS password (required for `/admin`)      |
+
+---
+
+## Admin CMS
+
+Password-protected content manager at **`/admin`**.
+
+```bash
+# .env.local
+ADMIN_PASSWORD=your-secure-password-here
+```
+
+| Route                      | Purpose                           |
+| -------------------------- | --------------------------------- |
+| `/admin/login`             | Sign in                           |
+| `/admin`                   | Article list (draft / published)  |
+| `/admin/posts/new`         | Create bilingual MDX article      |
+| `/admin/posts/{slug}/edit` | Edit EN + FR, preview MDX, delete |
+
+**Editor fields:** title, excerpt, kind, date, tags, related projects, cover path, draft flag, MDX body per locale.
+
+**Drafts** are hidden from the public site, RSS, and sitemap until published.
+
+> **Production note:** Vercel’s filesystem is read-only. The CMS writes to `content/*.mdx` on disk — use it locally, then commit and deploy. For in-production editing, wire a Git API or external storage later.
 
 ---
 
@@ -61,8 +87,12 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### New article
 
+**Option A — Admin CMS:** `/admin/posts/new` (set `ADMIN_PASSWORD` in `.env.local`).
+
+**Option B — Manual:**
+
 1. Create `content/en/my-slug.mdx` and `content/fr/my-slug.mdx`
-2. Frontmatter: `title`, `excerpt`, `kind`, `publishedAt`, `tags`
+2. Frontmatter: `title`, `excerpt`, `kind`, `publishedAt`, `tags`, optional `draft: true`
 3. Restart dev server — slug is picked up automatically
 
 ### Mermaid

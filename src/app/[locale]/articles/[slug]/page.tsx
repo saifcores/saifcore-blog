@@ -14,6 +14,8 @@ type Props = {
   params: Promise<{ locale: string; slug: string }>;
 };
 
+export const dynamic = "force-dynamic";
+
 export function generateStaticParams() {
   return getAllPostParams();
 }
@@ -22,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
   const loc = locale === "fr" ? "fr" : "en";
   const post = getPostBySlug(loc, slug);
-  if (!post) return {};
+  if (!post || post.meta.draft) return {};
 
   return buildPageMetadata({
     locale,
@@ -41,7 +43,7 @@ export default async function ArticlePage({ params }: Props) {
   const loc = locale === "fr" ? "fr" : "en";
   const post = getPostBySlug(loc, slug);
 
-  if (!post) {
+  if (!post || post.meta.draft) {
     notFound();
   }
 

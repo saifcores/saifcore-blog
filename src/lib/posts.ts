@@ -36,6 +36,7 @@ export function getPostBySlug(locale: string, slug: string): Post | null {
       excerpt: data.excerpt,
       kind: data.kind,
       publishedAt: data.publishedAt,
+      draft: data.draft === true,
       cover: data.cover,
       coverImage: getArticleCover(slug, data.cover),
       tags: data.tags ?? [],
@@ -54,13 +55,21 @@ export function getAllPosts(locale: string): PostMeta[] {
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
 }
 
+/** Published posts only — excludes drafts from public listings. */
+export function getPublishedPosts(locale: string): PostMeta[] {
+  return getAllPosts(locale).filter((post) => !post.draft);
+}
+
 export function getAllPostParams(): { locale: string; slug: string }[] {
   const locales = ["en", "fr"] as const;
   const params: { locale: string; slug: string }[] = [];
 
   for (const locale of locales) {
     for (const slug of getPostSlugs(locale)) {
-      params.push({ locale, slug });
+      const post = getPostBySlug(locale, slug);
+      if (post && !post.meta.draft) {
+        params.push({ locale, slug });
+      }
     }
   }
 
