@@ -1,25 +1,82 @@
 ---
 title: "Pourquoi tant de SaaS échouent en Afrique"
-excerpt: "Au-delà de la landing : paiements, distribution et hypothèses de confiance qui ne résistent pas au contact du terrain."
+excerpt: "Ce n'est rarement pas le produit qui meurt en premier. Paiements, distribution, settlement et hypothèses de confiance — avant que la roadmap ne rattrape."
 kind: writing
 publishedAt: "2025-02-10"
-tags: [saas, afrique, fintech]
+cover: "/images/articles/why-saas-fail-africa.png"
+tags: [saas, afrique, fintech, paiements, distribution]
 relatedProjects: [ecom-360-pme]
 ---
 
-Une recette pensée pour des économies où la carte domine, la logistique est prévisible et le change est stable vous induira en erreur dès que vous optimisez pour un marché où l'argent mobile, les réseaux d'agents et le liquide structurent encore le comportement. Ce n'est souvent pas la roadmap produit qui lâche en premier — c'est la stack invisible autour : comment l'argent circule, comment on tranche un litige, comment on gagne la confiance sans dix ans de notoriété.
+Une recette pensée pour des économies carte-first, une logistique same-day et un change stable vous induira en erreur dès que vous optimisez pour un marché où l'**argent mobile**, les **réseaux d'agents** et le **liquide** structurent encore le comportement.
 
-Les équipes qui « copient la Silicon Valley » sous-pondèrent souvent le dernier kilomètre : exigences KYC qui varient selon les corridors, fenêtres de settlement qui ne coïncident pas avec la paie, ou APIs partenaires qui renvoient un succès alors que le portefeuille de l'utilisateur est encore en attente. Votre architecture doit rendre ces états visibles — pas les masquer derrière un spinner générique.
+Ce n'est rarement pas la roadmap qui lâche en premier. C'est la stack invisible autour : comment l'argent circule, comment on tranche un litige, comment on gagne la confiance sans dix ans de notoriété.
+
+## Le piège du copier-coller
+
+Les équipes qui « copient San Francisco » sous-pondèrent le dernier kilomètre :
+
+| Hypothèse qui voyage mal | Ce que vous rencontrez vraiment |
+| --- | --- |
+| La carte est le défaut | Mobile money, USSD, cash-in agent |
+| Settlement same-day | Float, fichiers de lot, latence corridor |
+| KYC uniforme | Règles selon pays et partenaire |
+| `SUCCESS` = payé | Souvent accepté, pas encore settled |
+| Support = chat | Agents et ops terrain ferment la boucle |
+
+Les APIs partenaires renvoient un succès alors que le portefeuille est encore pending. Les fenêtres de settlement refusent de coller à la paie. Votre architecture doit rendre ces états **visibles** — pas les masquer derrière un spinner générique.
+
+## Trois modes d'échec qui tuent la traction
+
+### 1. Les paiements comme feature, pas comme système
+
+Si votre runbook « paiement bloqué » est un ping Slack vers un humain, vous n'avez pas encore une architecture de paiement. Vous avez un script.
+
+Concevez pour :
+
+- initiation idempotente
+- callbacks vérifiés
+- jobs de réconciliation
+- statut client que la finance peut défendre
+
+### 2. Distribution ignorée jusqu'à la croissance
+
+Dans beaucoup de corridors, la distribution *est* le produit : agents, agrégateurs, partenariats telco, réseaux informels. Un beau dashboard sans chemin vers l'acheteur est une démo, pas un business.
+
+### 3. Confiance supposée, pas conçue
+
+Sans gravité de marque, la confiance est opérationnelle : statut clair, settlement prévisible, litiges qui fonctionnent quand le réseau flanche. Les entonnoirs flous masquent des écarts structurels qu'aucun feature flag ne réparera.
+
+<Callout variant="warning">
+  Instrumentez l'adoption et les échecs comme vous instrumentez le revenu.
+  Si vous ne mesurez que les « comptes activés », vous manquerez le corridor
+  où l'argent n'atterrit jamais.
+</Callout>
 
 ## Sur quoi concevoir à la place
 
-Partez de contraintes observables : quels rails de paiement votre ICP utilise vraiment, ce que signifie une « bonne » latence en 3G, et quels artefacts de conformité les auditeurs exigeront en année deux, pas au jour du pitch. Instrumentez l'adoption et les échecs comme vous instrumentez le revenu — les entonnoirs flous masquent des écarts structurels qu'aucun feature flag ne réparera.
+Partez de contraintes observables :
 
-<Callout variant="info">
-  Règle pratique : si votre runbook « paiement bloqué » se résume à un ping
-  Slack vers un humain, vous n'avez pas encore une architecture de paiement —
-  vous avez un script. Automatisez la détection, les retries idempotents et un
-  statut lisible côté client avant de monter en dépense.
-</Callout>
+1. **Quels rails** votre ICP utilise vraiment — pas ceux que vos investisseurs préfèrent.
+2. **Ce que signifie une « bonne » latence** en 3G et couverture intermittente.
+3. **Quels artefacts de conformité** les auditeurs exigeront en année deux, pas au pitch.
+4. **Quels états** finance, support et produit doivent partager — voir [quand SUCCESS n'est pas settled](/articles/when-success-is-not-settled).
 
-L'objectif n'est pas de romanticiser la complexité locale — c'est de bâtir des systèmes assez honnêtes pour dégrader proprement quand le réseau capricie, que la réglementation pivote en milieu de trimestre, ou que votre sponsor quitte le compte. C'est la barre pour un SaaS qui tient au contact du réel.
+```mermaid
+flowchart TB
+  ICP["Réalité ICP"] --> Rails["Rails de paiement"]
+  ICP --> Dist["Distribution"]
+  ICP --> Trust["Ops de confiance"]
+  Rails --> Arch["États d'argent explicites"]
+  Dist --> Arch
+  Trust --> Arch
+  Arch --> Survive["Survit au contact du marché"]
+```
+
+## En résumé
+
+L'objectif n'est pas de romanticiser la complexité locale. C'est de bâtir des systèmes assez honnêtes pour dégrader proprement quand le réseau capricie, que la réglementation pivote, ou que votre sponsor quitte le compte.
+
+> **Un SaaS qui tient en Afrique n'est pas celui au pitch le plus propre. C'est celui dont les hypothèses d'argent, de distribution et de confiance survivent au premier contact.**
+
+Votre architecture actuelle resterait-elle crédible si le settlement prenait trois jours et que le callback n'arrivait jamais ?

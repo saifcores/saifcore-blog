@@ -1,13 +1,16 @@
 ---
 title: "ADR: Why a double-entry ledger for payment systems"
-excerpt: "A short architecture decision record for choosing accounting correctness, auditability, and reconciliation over a simple mutable balance table."
+excerpt: "Choose accounting correctness, auditability, and reconciliation over a mutable balance table — before finance and auditors ask why."
 kind: adr
 publishedAt: "2025-04-12"
-tags: [payments, ledger, fintech]
+cover: "/images/articles/adr-double-entry-ledger-payments.png"
+tags: [payments, ledger, fintech, adr, audit]
 relatedProjects: [double-entry-ledger]
 ---
 
-Mutable balances are attractive because they are simple to query. They are also dangerous when money moves through retries, reversals, provider callbacks, and delayed settlement. The moment finance asks why a balance changed, a single current-value table stops being enough.
+Mutable balances are attractive because they are simple to query. They are also dangerous when money moves through retries, reversals, provider callbacks, and delayed settlement.
+
+The moment finance asks why a balance changed, a single current-value table stops being enough.
 
 ## System context
 
@@ -25,6 +28,8 @@ C4Context
   Rel(ops, ledger, "Reconciles from journal")
 ```
 
+## Decision
+
 <Adr
   status="Accepted · 2025-04-12"
   context="The payment platform must support wallet integrations, provider callbacks, refunds, partner settlement, and finance reconciliation. Auditors need an immutable trail for every posted movement."
@@ -38,7 +43,36 @@ C4Context
   caption="The ledger journal is the source of truth. Balance views and caches are derived read models, never the authority for posted money."
 />
 
+## Why not a balance column?
+
+| Approach | Looks good for | Breaks when |
+| --- | --- | --- |
+| Mutable `balance` | Demo dashboards | Retries, partial refunds, disputes |
+| Event log without double-entry | Analytics | Debits without matching credits |
+| Double-entry journal + projections | Audit + scale | Requires accounting literacy up front |
+
+With double-entry:
+
+- every movement is **balanced** (debits = credits)
+- history is **append-only**
+- balances are **derived**, never authoritative alone
+- "why did this change?" is a journal query, not archaeology
+
 <Callout variant="warning">
   A ledger is not a reporting feature. It is the contract that lets product,
   finance, support, and compliance agree on what happened to money.
 </Callout>
+
+## Revisit when
+
+Reopen this ADR if:
+
+- you introduce multi-currency positions that need explicit FX events
+- regulators require a different audit export format
+- write latency on the journal becomes a measurable product constraint (then optimize projections — do not abandon the journal)
+
+## Bottom line
+
+Correctness first. Speed of "UPDATE balance" second. The expensive bug is the one finance cannot explain.
+
+> **Caches show money. The journal proves money.**

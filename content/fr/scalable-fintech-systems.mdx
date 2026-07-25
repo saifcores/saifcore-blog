@@ -1,57 +1,90 @@
 ---
-title: "Concevoir des systèmes fintech à l'échelle"
-excerpt: "Frontières claires autour de l'argent, commandes idempotentes et grands livres compréhensibles par la finance — pas seulement un Postgres plus gros."
+title: "Concevoir des systèmes fintech scalables"
+excerpt: "Scaler n'est pas un plus gros cluster Postgres. C'est des frontières d'argent claires, des commandes idempotentes, et un ledger que la finance peut défendre sous pression."
 kind: code
 publishedAt: "2025-01-22"
-tags: [fintech, idempotence, paiements]
-relatedProjects: [pan-african-payment-sdk]
+cover: "/images/articles/scalable-fintech-systems.png"
+tags: [fintech, idempotence, paiements, ledger, architecture]
+relatedProjects: [pan-african-payment-sdk, double-entry-ledger]
 ---
 
-Les systèmes monétaires cassent cher : doubles débits, settlements coincés dans des états ambigus, tableaux de rapprochement qui divergent de la base de référence. La solution est rarement une base plus grosse — ce sont des frontières explicites entre **initiation**, **autorisation**, **compensation** et **rapprochement**, chacune avec ses invariants et sa piste d'audit.
+Les systèmes d'argent échouent cher : doubles débits, settlements ambigus, tableurs de réconciliation qui divergent de la base de vérité.
+
+Le correctif n'est rarement pas une plus grosse base. Ce sont des frontières explicites entre **initiation**, **autorisation**, **clearing** et **réconciliation** — chacune avec ses invariants et sa piste d'audit.
 
 ```mermaid
 flowchart LR
-  Client["Client / partenaire"] --> Gateway["Passerelle API"]
-  Gateway --> Intent["Intention de paiement"]
-  Intent --> Auth["Autorisation"]
-  Auth --> Clear["Compensation"]
-  Clear --> Ledger["Événements grand livre"]
-  Ledger --> Recon["Rapprochement"]
+  Client["Client / partenaire"] --> Gateway["API gateway"]
+  Gateway --> Intent["Payment intent"]
+  Intent --> Auth["Authorization"]
+  Auth --> Clear["Clearing"]
+  Clear --> Ledger["Ledger events"]
+  Ledger --> Recon["Reconciliation"]
 ```
 
-## Intention de paiement idempotente
+## Frontière 1 : l'intent de paiement
 
-Les retries sont inévitables. Le client doit fournir une clé d'idempotence stable ; le serveur doit la traiter comme une clé métier unique, pas comme un en-tête optionnel.
+Chaque mouvement d'argent commence comme une **commande**, pas un effet de bord. Le client possède une clé d'idempotence stable ; le serveur la traite comme clé métier unique — pas comme header optionnel.
+
+Les retries sont inévitables. Dix retries doivent égaler **une** intention économique.
 
 <CodeBlock title="Clé d'idempotence sur la commande d'écriture">{`import { randomUUID } from "node:crypto";
 
 type CreatePayment = {
-amount: number;
-currency: string;
-/\*_ Générée côté client ; les retries DOIVENT réutiliser la même clé _/
-idempotencyKey: string;
+  amount: number;
+  currency: string;
+  /** Générée côté client ; les retries DOIVENT réutiliser la même clé */
+  idempotencyKey: string;
 };
 
 export async function createPaymentIntent(cmd: CreatePayment) {
   const existing = await store.findByIdempotencyKey(cmd.idempotencyKey);
   if (existing) return existing;
 
-const intent = {
-id: randomUUID(),
-...cmd,
-status: "requires_confirmation" as const,
-};
-await store.save(intent);
-return intent;
+  const intent = {
+    id: randomUUID(),
+    ...cmd,
+    status: "requires_confirmation" as const,
+  };
+  await store.save(intent);
+  return intent;
 }`}</CodeBlock>
 
 <Callout variant="info">
-  À grande échelle, l'idempotence doit figurer dans votre **contrat OpenAPI** et
-  vos tests d'intégration — pas seulement dans un commentaire. Journalisez la
-  clé à chaque retry avec des correlation IDs pour retracer une action
-  utilisateur de bout en bout.
+  Mettez l'idempotence dans le contrat OpenAPI et les tests d'intégration —
+  pas seulement dans un commentaire. Loggez la clé à chaque retry avec des
+  correlation IDs pour que le support suive une action utilisateur.
 </Callout>
 
-## Grand livre et rapprochement
+## Frontière 2 : autorisation vs exécution
 
-Si la finance ne peut pas expliquer votre grand livre en une session tableau blanc, l'opération paiera la taxe pour toujours. Modélisez les soldes en événements append-only quand c'est possible ; rendez « pourquoi ce montant est-il là ? » vérifiable depuis les données, pas le savoir tacite.
+L'autorisation répond « ce mouvement est-il permis ? » L'exécution répond « le rail l'a-t-il accepté ? » Les mélanger produit des faux verts : l'app affiche payé alors que le provider traite encore.
+
+Gardez la policy déterministe, indépendante de l'optimisme UI. Une réponse PSP ambiguë déclenche un **status check**, jamais un second débit.
+
+## Frontière 3 : le ledger comme source de vérité
+
+Si la finance ne peut pas expliquer votre modèle de ledger en une session tableau blanc, les ops paieront la taxe pour toujours.
+
+Préférez des événements append-only. Rendez « pourquoi ce montant est-il là ? » répondable depuis les données. Les tables de solde mutable sont acceptables comme **projections** — dangereuses comme seul enregistrement. Voir l'[ADR double-entry ledger](/articles/adr-double-entry-ledger-payments).
+
+| Couche | Possède | Ne doit pas posséder |
+| --- | --- | --- |
+| Intent API | Commandes, idempotence | Vérité finale de settlement |
+| Adapter provider | Mapping, retries, HMAC | Policy métier |
+| Ledger | Événements économiques postés | Copy UX |
+| Réconciliation | Écarts et orphelins | Inventer de l'argent |
+
+## Frontière 4 : la réconciliation comme produit
+
+La réconciliation n'est pas une corvée de fin de mois. C'est la boucle de feedback qui prouve que vos états collent à la réalité.
+
+- **Hot path** — poller les intents au-delà du SLA provider.
+- **Batch quotidien** — matcher fichiers de settlement et écritures.
+- **File manuelle** — les `UNKNOWN` ne passent jamais en auto-success.
+
+## En résumé
+
+Le scale horizontal sans ces frontières accélère juste l'argent en double et les threads Slack plus bruyants.
+
+> **Un système fintech scalable est celui où chaque franc peut s'expliquer — qui l'a ordonné, qui l'a autorisé, quel rail l'a touché, et quelle ligne de journal le prouve.**

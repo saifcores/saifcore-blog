@@ -1,30 +1,74 @@
 ---
 title: "Concevoir un middleware bancaire multi-filiales"
-excerpt: "Comment protéger les systèmes core banking tout en exposant des APIs gouvernées, des intégrations partenaires et des flux financiers observables sur plusieurs entités."
+excerpt: "Protéger le core. Gouverner le bord. Rendre traçable chaque requête qui touche l'argent — filiales, partenaires, audit."
 kind: writing
 publishedAt: "2025-04-28"
-tags: [banque, middleware, api-gateway]
+cover: "/images/articles/banking-middleware-multi-subsidiary.png"
+tags: [banking, middleware, api-gateway, gouvernance, audit]
 relatedProjects: [unified-api-gateway]
 ---
 
-Une banque multi-filiales n'a pas besoin d'une simple couche API de plus. Elle a besoin d'une frontière contrôlée entre des systèmes core fragiles, des équipes produit qui avancent vite et des partenaires externes. Le middleware doit normaliser identité, contrats, rate limits, audit et visibilité opérationnelle sans devenir le réceptacle de toutes les exceptions.
+Une banque multi-filiales n'a pas besoin d'une autre couche API fine. Elle a besoin d'une **frontière contrôlée** entre des cores fragiles, des équipes produit rapides, et des partenaires externes.
 
-## Commencer par la gouvernance, pas par les endpoints
+Le middleware doit normaliser identité, contrats, rate limits, pistes d'audit et visibilité ops — sans devenir la décharge de chaque exception.
 
-La première décision de conception concerne la responsabilité : qui peut publier une API, qui valide un breaking change et où vit le contrat OpenAPI canonique. Une fois cela explicite, la passerelle peut appliquer versioning, authentification, validation des entrées et corrélation des requêtes avant que le trafic n'atteigne les services domaine ou l'adaptateur core banking.
+## Partir de la gouvernance, pas des endpoints
+
+La première décision de design est l'ownership :
+
+- qui peut **publier** une API ?
+- qui approuve un changement **breaking** ?
+- où vit l'**OpenAPI canonique** ?
+
+Une fois c'est explicite, la gateway peut imposer versioning, authentification, validation d'entrée et corrélation **avant** que le trafic n'atteigne les services de domaine ou l'adapter core banking.
 
 <Callout variant="info">
   Un middleware bancaire réussit quand les incidents deviennent traçables :
-  requête partenaire, décision gateway, événement domaine, réponse core et trace
-  d'audit racontent la même histoire de corrélation.
+  requête partenaire → décision gateway → événement domaine → réponse core →
+  audit partagent une même histoire de corrélation.
 </Callout>
 
-## Concevoir pour la variance entre filiales
+## Concevoir pour la variance filiale
 
-Les filiales fonctionnent rarement avec les mêmes règles : plafonds, contrôles conformité, SLA partenaires et fenêtres de settlement varient. Gardez ces différences dans des couches de politiques et de configuration, pas dans des services forkés. L'architecture doit rendre les règles locales explicites tout en conservant un socle plateforme commun.
+Les filiales partagent rarement les mêmes règles : limites, contrôles de conformité, SLA partenaires, fenêtres de settlement. Gardez ces différences dans la **policy et la configuration**, pas dans des services forqués.
+
+| Cœur plateforme partagé | Policy locale / filiale |
+| --- | --- |
+| Patterns AuthN / AuthZ | Matrices de limites, profondeur KYC |
+| Schéma corrélation + audit | Calendriers de settlement |
+| Versioning de contrats | Allowlists partenaires |
+| Standards d'observabilité | SLA d'escalade |
+
+L'architecture doit rendre les règles locales explicites tout en préservant une colonne vertébrale unique.
+
+```mermaid
+flowchart TB
+  Partners["Partenaires / canaux"] --> GW["API gateway gouvernée"]
+  Subs["Apps filiales"] --> GW
+  GW --> Policy["Policy · limites · contrats"]
+  Policy --> Domain["Services de domaine"]
+  Domain --> Core["Adapters core banking"]
+  GW --> Audit["Audit · corrélation"]
+  Domain --> Audit
+```
 
 <Drawio
   src="/diagrams/banking-middleware-platform.drawio"
   title="Frontière plateforme"
-  caption="Partenaires et filiales passent par une passerelle gouvernée, une couche de politiques et une piste d'audit avant les services domaine ou les adaptateurs core banking."
+  caption="Partenaires et filiales partagent une gateway gouvernée, une couche policy et une piste d'audit avant les services de domaine ou les adapters core banking."
 />
+
+## Ce que le middleware doit posséder
+
+1. **Frontière d'identité** — credentials partenaires ≠ credentials core ; tokens courts ; révocation réelle.
+2. **Frontière de contrat** — OpenAPI versionné ; pas de dérive silencieuse de sémantique.
+3. **Observabilité de l'argent** — chaque tentative de débit a un correlation id que finance et ops peuvent suivre.
+4. **Policy d'échec** — timeouts, retries et circuit breakers définis une fois, pas par squad.
+
+Donner aux équipes produit les credentials bruts du core n'est pas de la vélocité. Ça efface la frontière dont vous aurez besoin dans la revue d'incident et chez le régulateur.
+
+## En résumé
+
+Un middleware qui se contente d'« exposer des APIs » devient un passif. Un middleware qui **gouverne le trafic qui touche l'argent** devient le système d'exploitation du changement bancaire.
+
+> **Protéger le core. Configurer la variance. Tracer chaque requête qui peut déplacer de l'argent.**

@@ -1,13 +1,16 @@
 ---
 title: "Designing scalable fintech systems"
-excerpt: "Clear money boundaries, idempotent commands, and ledgers your finance team can reason about — not just a bigger Postgres cluster."
+excerpt: "Scale is not a bigger Postgres cluster. It is clear money boundaries, idempotent commands, and a ledger finance can reason about under pressure."
 kind: code
 publishedAt: "2025-01-22"
-tags: [fintech, idempotency, payments]
-relatedProjects: [pan-african-payment-sdk]
+cover: "/images/articles/scalable-fintech-systems.png"
+tags: [fintech, idempotency, payments, ledger, architecture]
+relatedProjects: [pan-african-payment-sdk, double-entry-ledger]
 ---
 
-Money systems fail expensively: duplicate charges, settlements stuck in ambiguous states, reconciliation spreadsheets that diverge from the database of record. The fix is rarely a bigger database — it is explicit boundaries between **initiation**, **authorization**, **clearing**, and **reconciliation**, each with its own invariants and audit trail.
+Money systems fail expensively: duplicate charges, settlements stuck in ambiguous states, reconciliation spreadsheets that diverge from the database of record.
+
+The fix is rarely a bigger database. It is explicit boundaries between **initiation**, **authorization**, **clearing**, and **reconciliation** — each with its own invariants and audit trail.
 
 ```mermaid
 flowchart LR
@@ -19,38 +22,69 @@ flowchart LR
   Ledger --> Recon["Reconciliation"]
 ```
 
-## Idempotent payment intent
+## Boundary one: the payment intent
 
-Retries are inevitable. The client must supply a stable idempotency key; the server must treat it as a unique business key, not a nice-to-have header.
+Every money movement starts as a **command**, not a side effect. The client owns a stable idempotency key; the server treats it as a unique business key — not a nice-to-have header.
+
+Retries are inevitable. Ten retries must equal **one** economic intent.
 
 <CodeBlock title="Idempotency key on the write command">{`import { randomUUID } from "node:crypto";
 
 type CreatePayment = {
-amount: number;
-currency: string;
-/\*_ Client-generated; retries MUST reuse the same key _/
-idempotencyKey: string;
+  amount: number;
+  currency: string;
+  /** Client-generated; retries MUST reuse the same key */
+  idempotencyKey: string;
 };
 
 export async function createPaymentIntent(cmd: CreatePayment) {
   const existing = await store.findByIdempotencyKey(cmd.idempotencyKey);
   if (existing) return existing;
 
-const intent = {
-id: randomUUID(),
-...cmd,
-status: "requires_confirmation" as const,
-};
-await store.save(intent);
-return intent;
+  const intent = {
+    id: randomUUID(),
+    ...cmd,
+    status: "requires_confirmation" as const,
+  };
+  await store.save(intent);
+  return intent;
 }`}</CodeBlock>
 
 <Callout variant="info">
-  At scale, idempotency belongs in your **OpenAPI contract** and your
-  integration tests — not only in a comment. Log the key on every retry with
-  correlation IDs so support can trace a single user action across services.
+  Put idempotency in your OpenAPI contract and integration tests — not only in
+  a comment. Log the key on every retry with correlation IDs so support can
+  trace one user action across services.
 </Callout>
 
-## Ledger and reconciliation
+## Boundary two: authorization vs execution
 
-If finance cannot explain your ledger model in one whiteboard session, operations will pay the tax forever. Model balances as append-only events where possible; make “why is this amount here?” answerable from data, not tribal knowledge.
+Authorization answers "may this move?" Execution answers "did the rail accept it?" Mixing them produces false greens: the app shows paid while the provider is still processing.
+
+Keep policy deterministic and independent of UI optimism. Ambiguous PSP responses trigger a **status check**, never a second debit.
+
+## Boundary three: ledger as source of truth
+
+If finance cannot explain your ledger model in one whiteboard session, operations will pay the tax forever.
+
+Prefer append-only events. Make "why is this amount here?" answerable from data, not tribal knowledge. Mutable balance tables are fine as **projections** — dangerous as the only record. See the [double-entry ledger ADR](/articles/adr-double-entry-ledger-payments).
+
+| Layer | Owns | Must not own |
+| --- | --- | --- |
+| Intent API | Commands, idempotency | Final settlement truth |
+| Provider adapter | Mapping, retries, HMAC | Business policy |
+| Ledger | Posted economic events | UX copy |
+| Reconciliation | Gaps and orphans | Inventing money |
+
+## Boundary four: reconciliation as product
+
+Reconciliation is not a month-end chore. It is the feedback loop that proves your states match reality.
+
+- **Hot path** — poll intents past provider SLA.
+- **Daily batch** — match settlement files to posted entries.
+- **Manual queue** — unknowns never auto-succeed.
+
+## Bottom line
+
+Horizontal scaling without these boundaries just accelerates duplicate money and louder Slack threads.
+
+> **A scalable fintech system is one where every franc can explain itself — who ordered it, who authorized it, which rail touched it, and which journal line proves it.**

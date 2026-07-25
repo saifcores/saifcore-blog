@@ -1,20 +1,68 @@
 ---
-title: "Des revues d'architecture qui servent vraiment"
-excerpt: "Moins de slides, de décisions plus nettes : les ADR comme contrat entre équipes — pas un concours de schémas."
+title: "Des revues d'architecture qui aident vraiment"
+excerpt: "Moins de slides, des décisions plus claires : les ADR comme contrat entre équipes — pas un concours de beauté pour diagrammes."
 kind: adr
 publishedAt: "2024-12-05"
-tags: [architecture, adr, gouvernance]
+cover: "/images/articles/architecture-reviews-that-help.png"
+tags: [architecture, adr, gouvernance, decisions]
 ---
 
-Les revues déraillent quand la salle optimise pour **paraître** compétent plutôt que pour **réduire** le risque. On en sort avec une invitation au calendrier et un malaise vague — pas une décision qui survivra au prochain recrutement. Une revue utile est courte, adversariale dans le bon sens, et se termine avec des responsables et des dates.
+Les revues déraillent quand la salle optimise pour **paraître** intelligente plutôt que pour **réduire** le risque. Le livrable est une invitation calendrier et un malaise vague — pas une décision qui survit à la prochaine vague d'embauches.
+
+Une revue utile est courte, adversariale au bon sens, et se termine avec des owners et des dates.
+
+## Ce qu'une mauvaise revue produit
+
+- Des diagrammes que personne ne possède
+- « On devrait regarder X » sans owner
+- Un consensus qui s'évapore au premier incident
+- Aucune trace qu'un nouveau collaborateur peut lire en vingt minutes
+
+Si la réunion ne laisse pas derrière elle une décision searchable, c'était du théâtre.
+
+## Le contrat : ADR d'une page
 
 <Adr
-  status="Accepté · 2024-12-05"
-  context="Les équipes passaient des demi-journées en forums d'architecture sans décision tracée. Le produit avait besoin d'un alignement plus rapide sur les arbitrages (latence vs coût vs conformité) sans faire monter chaque choix en comité."
-  decision="Adopter une ADR d'une page par décision significative : contexte (avec liens), décision, conséquences (positives et négatives), et un seul déclencheur explicite de révision (seuil de métrique, date ou événement réglementaire). Les revues de plus de 45 minutes sont découpées ou annulées."
-  consequences="Positif : les décisions sont consultables dans Git ; les nouveaux lisent l'historique au lieu du folklore. Négatif : exige de la discipline pour mettre à jour le statut quand les hypothèses changent ; accepté n'est pas éternel sans déclencheur."
+  status="Accepted · 2024-12-05"
+  context="Les squads passaient des demi-journées en forums d'architecture sans décision enregistrée. Le produit avait besoin d'aligner plus vite latence / coût / conformité sans escalader chaque choix à un comité."
+  decision="Adopter un ADR d'une page par décision matérielle : contexte (avec liens), décision, conséquences (positives et négatives), et un trigger de revisit explicite (seuil métrique, date, ou événement réglementaire). Les revues de plus de 45 minutes sont découpées ou annulées."
+  consequences="Positif : décisions searchable dans Git ; les nouveaux lisent l'historique plutôt que le lore. Négatif : discipline requise pour mettre à jour le statut quand les hypothèses changent ; accepted n'est pas éternel sans trigger."
 />
 
-Les bonnes revues ont un ordre du jour publié, un sceptique désigné, et des suites qui tiennent dans le sprint suivant — pas un parking lot qui n'atterrit jamais. Les ADR fonctionnent quand elles répondent à trois questions : qu'a-t-on décidé, pourquoi, et qu'est-ce qui rouvrirait le débat ?
+## Comment tenir la salle
 
-Ce format s'adapte aussi bien à une équipe en amorçage qu'à une organisation à plusieurs métiers — parce qu'il optimise la clarté et la mémoire, pas le nombre de slides.
+| Rôle | Mission |
+| --- | --- |
+| **Auteur** | Livre le draft ADR 24h avant ; possède la décision |
+| **Sceptique** | Attaque les hypothèses, pas les personnes |
+| **Facilitateur** | Timeboxe ; tue le sprawl de slides |
+| **Scribe** | Met à jour statut et follow-ups dans la même PR |
+
+Règles qui gardent les revues utiles :
+
+1. **Agenda publié** — trois questions max : quoi, pourquoi, quand rouvrir.
+2. **45 minutes ou moins** — découper ou annuler ; ne pas étirer pour la politique.
+3. **Follow-ups dans le prochain sprint** — les parking lots qui n'atterrissent jamais sont de la dette souriante.
+4. **Triggers de revisit obligatoires** — « accepted » sans condition de sortie est un dogme.
+
+```mermaid
+flowchart LR
+  Draft["Draft ADR"] --> Review["Revue 45 min"]
+  Review --> Accept["Accepted + trigger"]
+  Review --> Reject["Rejected + pourquoi"]
+  Accept --> Git["Searchable dans Git"]
+  Reject --> Git
+  Git --> Revisit["Trigger → nouvel ADR"]
+```
+
+<Callout variant="info">
+  Un bon ADR répond à trois questions : qu'avons-nous décidé, pourquoi, et
+  qu'est-ce qui nous ferait rouvrir la discussion ? Si une réponse manque, la
+  revue n'est pas terminée.
+</Callout>
+
+## En résumé
+
+Ce format scale du seed aux orgs multi-lignes parce qu'il optimise pour la **clarté et la mémoire**, pas le nombre de slides.
+
+> **Une revue d'architecture qui ne laisse pas une décision dans Git n'a pas eu lieu.**

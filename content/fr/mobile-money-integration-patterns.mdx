@@ -1,50 +1,101 @@
 ---
-title: "Patterns d'intégration Mobile Money pour la fintech africaine"
-excerpt: "Wave, Orange Money, Free Money : les lacunes d'API, pièges de callback et problèmes d'idempotence que la production expose — et comment architecturer autour."
+title: "Patterns d'intégration mobile money pour la fintech africaine"
+excerpt: "Wave, Orange Money, Free Money : pièges de callback, vérification HMAC et jobs de réconciliation — pour que SUCCESS ne prétende jamais être settled."
 kind: code
 publishedAt: "2025-03-18"
-tags: [mobile-money, wave, orange-money, fintech]
+cover: "/images/articles/mobile-money-integration-patterns.png"
+tags: [mobile-money, wave, orange-money, fintech, reconciliation]
 relatedProjects: [pan-african-payment-sdk]
 ---
 
-Les rails mobile money en Afrique de l'Ouest ne sont pas uniformes. Wave, Orange Money et Free Money exposent chacun une sémantique de callback, des fenêtres de règlement et des comportements de retry différents. Un paiement marqué `SUCCESS` par le SDK du fournisseur n'est pas toujours une transaction réglée — et construire comme si c'était le cas se manifestera comme un cauchemar de rapprochement six mois en production.
+Les rails mobile money en Afrique de l'Ouest ne sont pas uniformes. Wave, Orange Money et Free Money exposent chacun des sémantiques de callback, des fenêtres de settlement et des comportements de retry différents.
 
-## Le problème du callback
+Un paiement marqué `SUCCESS` par le provider n'est pas toujours une transaction settled. Construire comme si c'était le cas devient un cauchemar de réconciliation six mois après la prod. Le vocabulaire plus précis est dans [quand SUCCESS n'est pas settled](/articles/when-success-is-not-settled) — cet article est le pattern d'intégration qui évite le piège.
 
-La plupart des fournisseurs livrent un webhook de callback de façon asynchrone — parfois quelques secondes après le paiement, parfois plusieurs minutes plus tard, et parfois jamais si l'endpoint était indisponible. Votre architecture doit découpler l'initiation du paiement de la confirmation : stocker l'intention immédiatement, mettre à jour l'état uniquement quand un callback vérifié arrive, et exécuter un job de rapprochement qui interroge l'endpoint de statut du fournisseur pour toute intention encore en attente après un timeout configurable.
+## Découpler initiation et confirmation
 
-<CodeBlock title="Machine d'état de l'intention de paiement — transitions Spring">{`public enum PaymentStatus {
-  INITIATED, PROVIDER_SENT, PENDING,
-  SUCCESS, FAILED, REFUNDED
+La plupart des providers livrent un webhook de façon asynchrone — parfois en secondes, parfois en minutes, parfois jamais si votre endpoint était down.
+
+Votre architecture doit :
+
+1. Stocker l'**intent** immédiatement à l'initiation.
+2. Mettre à jour l'état seulement après un callback **vérifié** (ou un status poll).
+3. Lancer la réconciliation pour les intents encore pending au-delà du SLA provider.
+
+```mermaid
+flowchart LR
+  Init["Create intent"] --> Sent["SENT_TO_PROVIDER"]
+  Sent --> Ack["PROVIDER_ACK"]
+  Ack --> Captured["FUNDS_CAPTURED"]
+  Captured --> Settled["SETTLED"]
+  Ack --> Failed["FAILED"]
+  Sent --> Recon["Recon poll"]
+  Recon --> Ack
+  Recon --> Captured
+  Recon --> Failed
+```
+
+## Mapper les codes provider — ne pas les mirroir
+
+Ne mettez jamais `settledAt` sur le premier callback `SUCCESS`. Mappez le vocabulaire provider vers une machine d'états interne que finance, support et produit peuvent partager.
+
+<CodeBlock title="Handler de callback — vérifier, mapper, transitionner">{`public enum InternalPaymentState {
+  INITIATED, SENT, PROVIDER_ACK, FUNDS_CAPTURED,
+  SETTLED, FAILED, EXPIRED
 }
 
 @Transactional
 public PaymentIntent handleCallback(CallbackPayload payload) {
-PaymentIntent intent = repository
-.findByProviderRef(payload.getReference())
-.orElseThrow(() -> new UnknownReferenceException(payload.getReference()));
+  verifyHmac(payload); // rejeter les SUCCESS spoofés
 
-if (intent.getStatus() == PaymentStatus.SUCCESS
-|| intent.getStatus() == PaymentStatus.FAILED) {
-return intent;
-}
+  PaymentIntent intent = repository
+    .findByProviderRef(payload.getReference())
+    .orElseThrow(() -> new UnknownReferenceException(payload.getReference()));
 
-intent.setStatus(payload.isSuccessful()
-? PaymentStatus.SUCCESS : PaymentStatus.FAILED);
-intent.setSettledAt(Instant.now());
-auditLog.record(intent, "callback", payload.getRawBody());
-return repository.save(intent);
+  if (intent.isTerminal()) {
+    return intent; // no-op idempotent
+  }
+
+  ProviderStatus mapped = adapter.mapStatus(payload.getCode());
+  switch (mapped) {
+    case ACCEPTED -> intent.transition(PROVIDER_ACK);
+    case DEBITED -> intent.transition(FUNDS_CAPTURED);
+    case SETTLED -> intent.transition(SETTLED);
+    case FAILED -> intent.transition(FAILED);
+    default -> auditLog.unknown(payload);
+  }
+
+  auditLog.record(intent, payload.getRawBody());
+  return repository.save(intent);
 }`}</CodeBlock>
 
-<Callout variant="info">
-  Vérifiez toujours la signature du callback contre la clé HMAC du fournisseur
-  avant de mettre à jour l'état. Les callbacks falsifiés qui marquent un
-  paiement comme SUCCESS sans règlement réel sont un vecteur d'attaque concret
-  dans la pratique.
+<Callout variant="warning">
+  Vérifiez toujours la signature du callback contre la clé HMAC du provider
+  avant de mettre à jour l'état. Des callbacks spoofés qui marquent SUCCESS
+  sans settlement sont un vrai vecteur d'attaque.
 </Callout>
 
-## Le rapprochement comme job de première classe
+## La réconciliation comme job de premier rang
 
-Exécutez un job de rapprochement planifié — toutes les 5 minutes pour les intentions actives, toutes les heures pour le lot du jour précédent. Pour chaque intention en statut `PENDING` au-delà de la fenêtre de règlement typique du fournisseur, interrogez directement l'API de statut du fournisseur. Traitez toute divergence comme une alerte.
+| Cadence | Périmètre | Action |
+| --- | --- | --- |
+| Toutes les 5 min | Intents actifs au-delà du SLA | Poller l'API status provider |
+| Horaire / quotidien | Batch de la veille | Matcher les lignes du fichier de settlement |
+| File manuelle | `UNKNOWN` après N polls | Jamais d'auto-success |
 
-Les systèmes qui passent à des millions de transactions sans briser les opérations financières ne sont pas ceux qui ont les intégrations fournisseur les plus rapides — ce sont ceux où chaque état monétaire est explicite, observable et récupérable sans intervention manuelle.
+Traitez la divergence comme une **alerte**, pas comme une surprise tableur.
+
+## Variance provider à concevoir
+
+| Préoccupation | Ce qui varie | Règle de design |
+| --- | --- | --- |
+| Timing callback | Secondes → jamais | Intent d'abord ; recon ferme les trous |
+| Noms de statut | `SUCCESS` ≠ settled | Enum interne + table d'adapter |
+| Settlement | Float instantané vs CSV T+1 | Séparer `FUNDS_CAPTURED` / `SETTLED` |
+| Retries | Client + provider | Clé d'idempotence à l'initiation |
+
+## En résumé
+
+Les systèmes qui scalent à des millions de transactions sans casser la finance ne sont pas ceux aux SDK provider les plus rapides. Ce sont ceux où chaque état d'argent est **explicite, observable et récupérable** sans héroïsme manuel.
+
+> **Intégrez le rail. Possédez la machine d'états. Laissez la réconciliation — pas l'optimisme — fermer la boucle.**
