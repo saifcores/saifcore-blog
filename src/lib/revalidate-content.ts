@@ -10,5 +10,6 @@ export function revalidateBlogContent(slug: string): void {
   revalidatePath(`/fr/articles/${slug}`);
   revalidatePath("/feed.xml");
   revalidatePath("/fr/feed.xml");
+  revalidatePath("/api/articles");
   revalidatePath("/sitemap.xml");
 }

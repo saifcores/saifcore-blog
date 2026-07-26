@@ -165,6 +165,21 @@ scripts/
 3. Set `NEXT_PUBLIC_BLOG_URL=https://blog.saifcore.tech` on the **portfolio** repo
 4. Redeploy portfolio so article teasers link to the blog
 
+### Portfolio recent articles API
+
+Public JSON endpoint for the portfolio (CORS allowed for `NEXT_PUBLIC_PORTFOLIO_URL`):
+
+```
+GET https://blog.saifcore.tech/api/articles?locale=en&limit=3
+```
+
+| Query    | Default | Notes        |
+| -------- | ------- | ------------ |
+| `locale` | `en`    | `en` or `fr` |
+| `limit`  | `3`     | Max `10`     |
+
+Response shape: `{ articles: [{ slug, title, excerpt, kind, publishedAt, readingTime, tags, url, coverImage }] }` with absolute `url` and `coverImage`.
+
 ---
 
 ## License
