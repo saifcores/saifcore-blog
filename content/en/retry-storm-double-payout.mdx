@@ -1,0 +1,67 @@
+---
+title: "The retry storm that almost paid a merchant twice"
+excerpt: "A provider timeout, a naive client retry loop, and the one idempotency check that stood between a clean settlement and an awkward call with finance."
+kind: writing
+publishedAt: "2025-09-30"
+cover: "/images/articles/retry-storm-double-payout.svg"
+tags: [idempotency, retries, payments, mobile-money, reconciliation]
+relatedProjects: [pan-african-payment-sdk]
+---
+
+A mobile money provider went **slow, not down** — the worst kind of failure. Requests were taking four, five, sometimes eight seconds instead of the usual few hundred milliseconds.
+
+A client integration with an eager retry policy started firing the same payout request again after a three-second timeout, still believing the first attempt had failed. It hadn't. It was just late.
+
+## What actually happened
+
+Within about ninety seconds, the same payout command had been submitted **three times** for the same merchant. On the provider side, all three eventually succeeded — three separate transfers, same amount, same recipient.
+
+If the payments service had treated each inbound request as a new command, the merchant account would have been credited three times for one sale. Finance would have discovered it during end-of-day reconciliation — days later — with no obvious trail back to the cause.
+
+```mermaid
+sequenceDiagram
+  participant Client
+  participant API as Payout API
+  participant Provider
+
+  Client->>API: Payout (key=K)
+  API->>Provider: Transfer #1
+  Note over Provider: Slow (5–8s)
+  Client->>API: Retry (key=K)
+  Client->>API: Retry (key=K)
+  API-->>Client: Same response (in-flight / completed)
+  Provider-->>API: Transfer #1 OK
+  Note over API: Retries #2/#3 discarded
+```
+
+<Callout variant="warning">
+  That is the trap with retries under latency, not downtime: every signal a
+  naive client looks at (timeout, no response, connection reset) is
+  indistinguishable from “the request never arrived.” It usually did arrive.
+  It just hadn't answered yet.
+</Callout>
+
+## The one check that held the line
+
+The payout endpoint required a client-generated **idempotency key**, hashed from the merchant ID, the order ID, and the amount — not a random UUID the retry loop could regenerate on every attempt.
+
+All three retries carried the same key. The server recognized the second and third calls as duplicates of an in-flight command, returned the original response, and never issued a second transfer.
+
+| Key design | Outcome under retry storm |
+| --- | --- |
+| Random UUID per attempt | Three transfers · finance incident |
+| Stable hash of business intent | One transfer · noisy logs only |
+
+No incident, no reconciliation surprise, no call to the merchant to explain a refund. Just a slightly noisy log line, three requests wide, that a bored engineer noticed the next morning.
+
+## What “idempotent” has to mean
+
+The lesson wasn't “add retries carefully.” It was that idempotency has to be derived from the **business intent** of a command, not from a client-side identifier that a retry can accidentally reset.
+
+Same rule as in [scalable fintech systems](/articles/scalable-fintech-systems) and [when SUCCESS is not settled](/articles/when-success-is-not-settled): retries are inevitable; ambiguous network answers are not permission to debit again.
+
+If the key can change between attempts, the safety net was never actually there.
+
+## Bottom line
+
+> **Idempotency is not a header. It is a business key that must survive every timeout, every retry, and every eager client.**
