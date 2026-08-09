@@ -1,11 +1,19 @@
 ---
-title: "The retry storm that almost paid a merchant twice"
-excerpt: "A provider timeout, a naive client retry loop, and the one idempotency check that stood between a clean settlement and an awkward call with finance."
+title: The retry storm that almost paid a merchant twice
+excerpt: >-
+  A provider timeout, a naive client retry loop, and the one idempotency check
+  that stood between a clean settlement and an awkward call with finance.
 kind: writing
-publishedAt: "2025-09-30"
-cover: "/images/articles/retry-storm-double-payout.svg"
-tags: [idempotency, retries, payments, mobile-money, reconciliation]
-relatedProjects: [pan-african-payment-sdk]
+publishedAt: '2026-08-07'
+tags:
+  - idempotency
+  - retries
+  - payments
+  - mobile-money
+  - reconciliation
+relatedProjects:
+  - pan-african-payment-sdk
+cover: /images/articles/retry-storm-double-payout.svg
 ---
 
 A mobile money provider went **slow, not down** — the worst kind of failure. Requests were taking four, five, sometimes eight seconds instead of the usual few hundred milliseconds.
