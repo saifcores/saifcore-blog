@@ -1,11 +1,20 @@
 ---
-title: "La tempête de retries qui a failli payer un marchand deux fois"
-excerpt: "Un timeout fournisseur, une boucle de retry côté client trop naïve, et le seul contrôle d'idempotence qui a évité un règlement en double — et un appel gênant avec la finance."
+title: La tempête de retries qui a failli payer un marchand deux fois
+excerpt: >-
+  Un timeout fournisseur, une boucle de retry côté client trop naïve, et le seul
+  contrôle d'idempotence qui a évité un règlement en double — et un appel gênant
+  avec la finance.
 kind: writing
-publishedAt: "2025-09-30"
-cover: "/images/articles/retry-storm-double-payout.svg"
-tags: [idempotence, retries, paiements, mobile-money, rapprochement]
-relatedProjects: [pan-african-payment-sdk]
+publishedAt: '2025-09-30'
+tags:
+  - idempotence
+  - retries
+  - paiements
+  - mobile-money
+  - rapprochement
+relatedProjects:
+  - pan-african-payment-sdk
+cover: /images/articles/retry-storm-double-payout.svg
 ---
 
 Un provider mobile money est devenu **lent, pas indisponible** — le pire type de panne. Les requêtes prenaient quatre, cinq, parfois huit secondes au lieu des quelques centaines de millisecondes habituelles.
