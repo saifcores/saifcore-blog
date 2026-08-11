@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAllAdminPosts } from "@/lib/posts-admin";
 import { ArticleKindBadge } from "@/components/article-kind-badge";
+import { ArticlePublishToggle } from "@/components/admin/article-publish-toggle";
 
 export default async function AdminDashboardPage() {
   const posts = await getAllAdminPosts();
@@ -80,13 +81,19 @@ export default async function AdminDashboardPage() {
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-4 text-right">
-                  <Link
-                    href={`/admin/posts/${post.slug}/edit`}
-                    className="text-sm font-semibold text-[var(--accent-text)] transition hover:underline"
-                  >
-                    Edit
-                  </Link>
+                <td className="px-4 py-4">
+                  <div className="flex flex-wrap items-center justify-end gap-3">
+                    <ArticlePublishToggle
+                      slug={post.slug}
+                      isDraft={post.isDraft}
+                    />
+                    <Link
+                      href={`/admin/posts/${post.slug}/edit`}
+                      className="text-sm font-semibold text-[var(--accent-text)] transition hover:underline"
+                    >
+                      Edit
+                    </Link>
+                  </div>
                 </td>
               </tr>
             ))}

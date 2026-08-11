@@ -96,6 +96,23 @@ export function ArticleEditor({ mode, initialSlug, initialPair }: Props) {
     field: keyof PostFrontmatter,
     value: string | boolean | string[],
   ) {
+    // Draft/publish applies to every enabled locale so the article cannot
+    // stay live in one language while marked draft in another.
+    if (field === "draft" && typeof value === "boolean") {
+      setLocales((current) => {
+        const next = { ...current };
+        for (const locale of ["en", "fr"] as const) {
+          if (!next[locale].enabled) continue;
+          next[locale] = {
+            ...next[locale],
+            frontmatter: { ...next[locale].frontmatter, draft: value },
+          };
+        }
+        return next;
+      });
+      return;
+    }
+
     updateLocale(activeLocale, (current) => ({
       ...current,
       frontmatter: { ...current.frontmatter, [field]: value },
@@ -108,6 +125,68 @@ export function ArticleEditor({ mode, initialSlug, initialPair }: Props) {
       !slugTouched
     ) {
       setSlug(slugifyTitle(value));
+    }
+  }
+
+  const isDraft = (["en", "fr"] as const)
+    .filter((locale) => locales[locale].enabled)
+    .every((locale) => locales[locale].frontmatter.draft);
+
+  async function handlePublishToggle() {
+    if (mode !== "edit" || !initialSlug) return;
+
+    const nextDraft = !isDraft;
+    const label = nextDraft ? "unpublish" : "publish";
+    if (
+      !window.confirm(
+        `${label[0].toUpperCase()}${label.slice(1)} "${initialSlug}" in all locales?`,
+      )
+    ) {
+      return;
+    }
+
+    setErrors([]);
+    setIsSaving(true);
+
+    try {
+      const response = await fetch(`/api/admin/posts/${initialSlug}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ draft: nextDraft }),
+      });
+
+      const data = (await response.json()) as {
+        errors?: { field: string; message: string }[];
+        error?: string;
+      };
+
+      if (!response.ok) {
+        setErrors(
+          data.errors?.map((item) =>
+            item.field === "_"
+              ? item.message
+              : `${item.field}: ${item.message}`,
+          ) ?? [data.error ?? `Failed to ${label}.`],
+        );
+        return;
+      }
+
+      setLocales((current) => {
+        const next = { ...current };
+        for (const locale of ["en", "fr"] as const) {
+          if (!next[locale].enabled) continue;
+          next[locale] = {
+            ...next[locale],
+            frontmatter: { ...next[locale].frontmatter, draft: nextDraft },
+          };
+        }
+        return next;
+      });
+      router.refresh();
+    } catch {
+      setErrors([`Network error while trying to ${label}.`]);
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -389,13 +468,14 @@ export function ArticleEditor({ mode, initialSlug, initialPair }: Props) {
               <label className="flex items-center gap-2 sm:col-span-2">
                 <input
                   type="checkbox"
-                  checked={active.frontmatter.draft ?? false}
+                  checked={isDraft}
                   onChange={(event) =>
                     updateFrontmatter("draft", event.target.checked)
                   }
                 />
                 <span className="text-sm text-[var(--text-secondary)]">
-                  Save as draft (hidden from site, RSS, and sitemap)
+                  Save as draft (all locales — hidden from site, RSS, and
+                  sitemap)
                 </span>
               </label>
             </div>
@@ -464,18 +544,26 @@ export function ArticleEditor({ mode, initialSlug, initialPair }: Props) {
             >
               {isSaving ? "Saving…" : "Save article"}
             </button>
-            {mode === "edit" &&
-              initialSlug &&
-              !locales.en.frontmatter.draft && (
-                <a
-                  href={`/articles/${initialSlug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-xl border border-[var(--border-subtle)] px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary)]"
-                >
-                  View live ↗
-                </a>
-              )}
+            {mode === "edit" && (
+              <button
+                type="button"
+                onClick={handlePublishToggle}
+                disabled={isSaving}
+                className="rounded-xl border border-[var(--border-subtle)] px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--bg-elevated)] disabled:opacity-50"
+              >
+                {isDraft ? "Publish" : "Unpublish"}
+              </button>
+            )}
+            {mode === "edit" && initialSlug && !isDraft && (
+              <a
+                href={`/articles/${initialSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl border border-[var(--border-subtle)] px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary)]"
+              >
+                View live ↗
+              </a>
+            )}
             {mode === "edit" && (
               <button
                 type="button"

@@ -3,6 +3,7 @@ import {
   deleteAdminPost,
   getAdminPostPair,
   saveAdminPostPair,
+  setAdminPostDraft,
 } from "@/lib/posts-admin";
 import { isAdminAuthenticated, unauthorizedResponse } from "@/lib/admin-auth";
 import { ADMIN_LOCALES } from "@/lib/admin-constants";
@@ -23,6 +24,10 @@ type LocalePayload = {
 
 type UpdateBody = {
   locales: Partial<Record<LocaleCode, LocalePayload>>;
+};
+
+type PublishBody = {
+  draft: boolean;
 };
 
 type RouteContext = {
@@ -106,6 +111,52 @@ export async function PUT(request: Request, context: RouteContext) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to save article.";
+
+    return NextResponse.json(
+      { errors: [{ field: "_", message }] },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(request: Request, context: RouteContext) {
+  if (!(await isAdminAuthenticated())) return unauthorizedResponse();
+
+  if (isProductionWithoutContentStore()) {
+    return NextResponse.json(
+      { errors: [{ field: "_", message: contentStoreNotConfiguredMessage() }] },
+      { status: 503 },
+    );
+  }
+
+  const { slug } = await context.params;
+  const body = (await request.json()) as PublishBody;
+
+  if (typeof body.draft !== "boolean") {
+    return NextResponse.json(
+      {
+        errors: [{ field: "draft", message: "Expected boolean draft flag." }],
+      },
+      { status: 400 },
+    );
+  }
+
+  try {
+    await assertGitHubWriteAccess();
+    const updated = await setAdminPostDraft(slug, body.draft);
+    if (!updated) {
+      return NextResponse.json({ error: "Not found." }, { status: 404 });
+    }
+
+    revalidateBlogContent(slug);
+    return NextResponse.json({ ok: true, slug, draft: body.draft });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : body.draft
+          ? "Failed to unpublish article."
+          : "Failed to publish article.";
 
     return NextResponse.json(
       { errors: [{ field: "_", message }] },

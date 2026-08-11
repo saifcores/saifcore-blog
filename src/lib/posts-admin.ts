@@ -111,7 +111,8 @@ export async function getAllAdminPosts(): Promise<AdminPostSummary[]> {
 
     if (!primary) continue;
 
-    const isDraft = locales.some(
+    // Draft only when every locale is unpublished (nothing public).
+    const isDraft = locales.every(
       (locale) => pair.locales[locale]?.frontmatter.draft,
     );
 
@@ -175,6 +176,31 @@ export async function saveAdminPostPair(
       await writeLocalePost(locale, slug, payload.frontmatter, payload.content);
     }
   }
+}
+
+/** Set draft/published on every locale that exists for a slug. */
+export async function setAdminPostDraft(
+  slug: string,
+  draft: boolean,
+): Promise<boolean> {
+  const pair = await getAdminPostPair(slug);
+  const toSave: Partial<
+    Record<LocaleCode, { frontmatter: PostFrontmatter; content: string }>
+  > = {};
+
+  for (const locale of ADMIN_LOCALES) {
+    const existing = pair.locales[locale];
+    if (!existing) continue;
+    toSave[locale] = {
+      frontmatter: { ...existing.frontmatter, draft },
+      content: existing.content,
+    };
+  }
+
+  if (!Object.keys(toSave).length) return false;
+
+  await saveAdminPostPair(slug, toSave);
+  return true;
 }
 
 export async function slugExists(slug: string): Promise<boolean> {
