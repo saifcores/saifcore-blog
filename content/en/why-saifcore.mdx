@@ -1,0 +1,88 @@
+---
+title: Why SAIFCORE — and why this blog exists
+excerpt: >-
+  Backend platforms for business-critical systems, with a focus on payments,
+  reliability, and architectures that survive production — not slide decks.
+  Based in Dakar, written for teams that move money.
+kind: reflection
+publishedAt: '2026-08-11'
+tags:
+  - about
+  - architecture
+  - fintech
+  - payments
+  - backend
+relatedProjects:
+  - pan-african-payment-sdk
+  - double-entry-ledger
+cover: /images/articles/why-saifcore.svg
+---
+
+I build and evolve **backend platforms for business-critical systems** — reliability, scalability, and long-term maintainability first; feature velocity second when those two conflict.
+
+My work sits in enterprise platforms, banking, and payment infrastructure: Java, Spring Boot, distributed systems, API design, cloud-native architectures, and the integrations that never look simple once money is involved. Delivery does not stop at a green pipeline. It includes domain design, resilience, observability, data consistency, and production readiness.
+
+This publication is the public notebook for that work.
+
+## The problem this blog is for
+
+Most engineering content optimizes for interviews or framework fashion. Teams that move money need something else: vocabulary finance can defend, failure modes that only appear under latency, and boundaries that still hold when a provider is slow — not down.
+
+I care especially about the hard middle of financial infrastructure:
+
+| Concern                      | Why it matters in production                    |
+| ---------------------------- | ----------------------------------------------- |
+| **Provider abstraction**     | Rails change; your domain should not            |
+| **Idempotency**              | Retries are inevitable; double payouts are not  |
+| **Retries & failover**       | Timeout ≠ “never arrived”                       |
+| **Payment state management** | Accepted ≠ confirmed ≠ settled                  |
+| **Reconciliation**           | The bank file is part of the product            |
+| **Distributed workflows**    | Side effects fail independently of the hot path |
+
+If your system cannot explain every franc — who ordered it, who authorized it, which rail touched it, which journal line proves it — you do not yet have a payments architecture. You have a script with a dashboard.
+
+## What I work on
+
+**Focus:** Backend Engineering · Distributed Systems · FinTech & Payments · Software Architecture
+
+Day to day that means:
+
+- Designing and evolving platforms that other teams ship against
+- Keeping consistency and audit trails honest under at-least-once delivery
+- Making operational reality (headcount, rails, subsidiaries) a first-class design input — not a footnote after the service diagram
+
+Alongside professional work, I build **production-oriented** payment backends to deepen the craft: orchestration, state machines, ledgers, and the recovery paths you only trust once you have broken them yourself.
+
+## Where I write from
+
+Based in **Dakar, Senegal**, I work at the intersection of African and global technology ecosystems. Mobile money, multi-subsidiary banking, and corridor complexity are not edge cases here — they are the default. Global card-gateway patterns still apply; the operating constraints are sharper.
+
+SAIFCORE is that positioning made concrete: engineering that treats African payment and banking infrastructure as a first-class design surface, with the same rigor expected of any system that cannot afford silent money loss.
+
+Portfolio and systems: [saifcore.tech](https://saifcore.tech).
+
+## How to read this blog
+
+Start with the thesis, then pick the depth you need:
+
+1. [Stop shipping `isPaid: true`](/articles/stop-shipping-is-paid-true) — the vocabulary gap that creates most “successful” failures
+2. [When `SUCCESS` is not settled](/articles/when-success-is-not-settled) — provider semantics vs finance
+3. [The retry storm that almost paid a merchant twice](/articles/retry-storm-double-payout) — idempotency as a business key
+4. [Payment gateway system design](/articles/payment-gateway-system-design) — auth → capture → settle → payout
+5. [Stop defaulting to microservices in West African fintech](/articles/stop-microservices-first-west-africa) — ops headcount before service sprawl
+
+ADRs, integration patterns, and longer architecture notes live alongside these — same contract, different zoom level.
+
+## Who this is for
+
+- Backend and platform engineers who own money-touching paths
+- Tech leads designing payment, banking, or SaaS platforms
+- Founders and CTOs who need architecture that finance and auditors can live with
+
+Not for: framework tourism, “10 tools that changed my life,” or architecture theatre without owners and revisit triggers.
+
+## The standard
+
+> **Ship systems where every money movement is intentional, observable, and reconcilable — then write down the decisions so the next incident does not start from lore.**
+
+If that is the bar you are building to, this blog is for you. If you are stuck between provider docs and a settlement file that will not match, [start a conversation](https://saifcore.tech/en#contact).
