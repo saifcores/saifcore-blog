@@ -1,11 +1,21 @@
 ---
-title: "ADR : pourquoi un ledger en partie double pour les paiements"
-excerpt: "Choisir la correction comptable, l'auditabilité et la réconciliation plutôt qu'une table de solde mutable — avant que finance et auditeurs ne demandent pourquoi."
+title: 'ADR : pourquoi un ledger en partie double pour les paiements'
+excerpt: >-
+  Choisir la correction comptable, l'auditabilité et la réconciliation plutôt
+  qu'une table de solde mutable — avant que finance et auditeurs ne demandent
+  pourquoi.
 kind: adr
-publishedAt: "2025-04-12"
-cover: "/images/articles/adr-double-entry-ledger-payments.png"
-tags: [paiements, ledger, fintech, adr, audit]
-relatedProjects: [double-entry-ledger]
+publishedAt: '2025-04-12'
+tags:
+  - paiements
+  - ledger
+  - fintech
+  - adr
+  - audit
+relatedProjects:
+  - double-entry-ledger
+draft: true
+cover: /images/articles/adr-double-entry-ledger-payments.png
 ---
 
 Les soldes mutables sont attractifs parce qu'ils sont simples à interroger. Ils sont aussi dangereux quand l'argent passe par retries, reversals, callbacks provider et settlement différé.
