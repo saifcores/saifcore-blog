@@ -1,11 +1,20 @@
 ---
-title: "ADR: Why a double-entry ledger for payment systems"
-excerpt: "Choose accounting correctness, auditability, and reconciliation over a mutable balance table — before finance and auditors ask why."
+title: 'ADR: Why a double-entry ledger for payment systems'
+excerpt: >-
+  Choose accounting correctness, auditability, and reconciliation over a mutable
+  balance table — before finance and auditors ask why.
 kind: adr
-publishedAt: "2025-04-12"
-cover: "/images/articles/adr-double-entry-ledger-payments.png"
-tags: [payments, ledger, fintech, adr, audit]
-relatedProjects: [double-entry-ledger]
+publishedAt: '2025-04-12'
+tags:
+  - payments
+  - ledger
+  - fintech
+  - adr
+  - audit
+relatedProjects:
+  - double-entry-ledger
+draft: true
+cover: /images/articles/adr-double-entry-ledger-payments.png
 ---
 
 Mutable balances are attractive because they are simple to query. They are also dangerous when money moves through retries, reversals, provider callbacks, and delayed settlement.
