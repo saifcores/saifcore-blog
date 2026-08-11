@@ -1,0 +1,58 @@
+---
+title: "Stop shipping `isPaid: true`"
+excerpt: >-
+  Most payment bugs are vocabulary bugs. Accepted is not confirmed. Confirmed
+  is not settled. The three-state model this blog starts from — and why your
+  boolean is lying to finance.
+kind: writing
+publishedAt: "2026-08-11"
+cover: "/images/articles/stop-shipping-is-paid-true.svg"
+tags:
+  - payments
+  - fintech
+  - reconciliation
+  - ledger
+  - architecture
+relatedProjects:
+  - pan-african-payment-sdk
+  - double-entry-ledger
+---
+
+Support closed the ticket. The app showed green. Finance opened Monday's settlement file and three rows were missing.
+
+Nobody lied. Your schema did.
+
+`isPaid: true` collapses three different moments into one bit. That bit is enough for a demo. It is not enough for a ledger, a dispute, or an auditor.
+
+## Three states, not one boolean
+
+| State         | What actually happened                          | What you may show the user         |
+| ------------- | ----------------------------------------------- | ---------------------------------- |
+| **Accepted**  | Provider took the request; debit may still fail | "Processing…"                      |
+| **Confirmed** | Wallet / card hold succeeded; float moved       | "Paid" — with an asterisk ops owns |
+| **Settled**   | Batch / bank file closed the loop               | Revenue finance will recognize     |
+
+Card rails call these auth → capture → settlement. Mobile money often hides them behind one callback named `SUCCESS`. Same money. Same trap. Different names.
+
+If your domain model has a single boolean, you will eventually lie to at least one audience: the customer, support, or finance.
+
+## Why this is the entry point
+
+This blog exists for teams that move money in markets where callbacks are late, providers are slow-not-down, and "it worked in staging" means nothing across eleven subsidiaries.
+
+The rest of the catalog is the same thesis, applied:
+
+- [When `SUCCESS` is not settled](/articles/when-success-is-not-settled) — provider vocabulary vs finance vocabulary
+- [The retry storm that almost paid a merchant twice](/articles/retry-storm-double-payout) — idempotency as a business key
+- [Payment gateway system design](/articles/payment-gateway-system-design) — auth → capture → settle → payout end to end
+- [Stop defaulting to microservices in West African fintech](/articles/stop-microservices-first-west-africa) — ops headcount before service diagrams
+
+## The rule that survives every rail
+
+```text
+UI copy  ≠  provider status  ≠  ledger truth  ≠  bank settlement
+```
+
+Map each of those to an explicit state. Persist transitions. Reconcile on a schedule. Never let a spinner invent certainty.
+
+> **Ship states finance can defend. Booleans are for feature flags — not for money.**

@@ -1,0 +1,58 @@
+---
+title: "Arrêtez de shipper `isPaid: true`"
+excerpt: >-
+  La plupart des bugs paiement sont des bugs de vocabulaire. Accepté n'est pas
+  confirmé. Confirmé n'est pas settled. Le modèle à trois états d'où part ce
+  blog — et pourquoi votre booléen ment à la finance.
+kind: writing
+publishedAt: "2026-08-11"
+cover: "/images/articles/stop-shipping-is-paid-true.svg"
+tags:
+  - paiements
+  - fintech
+  - rapprochement
+  - ledger
+  - architecture
+relatedProjects:
+  - pan-african-payment-sdk
+  - double-entry-ledger
+---
+
+Le support a fermé le ticket. L'app affichait du vert. La finance ouvre le fichier de settlement du lundi : trois lignes manquent.
+
+Personne n'a menti. Votre schéma, si.
+
+`isPaid: true` écrase trois moments distincts dans un seul bit. Ce bit suffit pour une démo. Pas pour un ledger, un litige, ou un auditeur.
+
+## Trois états, pas un booléen
+
+| État         | Ce qui s'est vraiment passé                                  | Ce que vous pouvez montrer à l'utilisateur |
+| ------------ | ------------------------------------------------------------ | ------------------------------------------ |
+| **Accepté**  | Le provider a pris la requête ; le débit peut encore échouer | « En cours… »                              |
+| **Confirmé** | Portefeuille / hold carte OK ; le float a bougé              | « Payé » — avec un astérisque côté ops     |
+| **Settled**  | Le fichier batch / banque a fermé la boucle                  | Revenu que la finance reconnaîtra          |
+
+Les rails carte appellent ça auth → capture → settlement. Le mobile money le cache souvent derrière un seul callback nommé `SUCCESS`. Même argent. Même piège. Noms différents.
+
+Si votre modèle de domaine a un seul booléen, vous mentirez tôt ou tard à au moins une audience : le client, le support, ou la finance.
+
+## Pourquoi c'est le point d'entrée
+
+Ce blog s'adresse aux équipes qui déplacent de l'argent là où les callbacks arrivent en retard, où les providers sont lents-pas-down, et où « ça marche en staging » ne veut plus rien dire sur onze filiales.
+
+Le reste du catalogue, c'est la même thèse, appliquée :
+
+- [Quand `SUCCESS` n'est pas settled](/fr/articles/when-success-is-not-settled) — vocabulaire provider vs vocabulaire finance
+- [La tempête de retries qui a failli payer un marchand deux fois](/fr/articles/retry-storm-double-payout) — l'idempotence comme clé métier
+- [Conception d'une payment gateway](/fr/articles/payment-gateway-system-design) — auth → capture → settle → payout de bout en bout
+- [Arrêtez le réflexe microservices en fintech ouest-africaine](/fr/articles/stop-microservices-first-west-africa) — l'effectif ops avant les diagrammes de services
+
+## La règle qui survit à tous les rails
+
+```text
+Copie UI  ≠  statut provider  ≠  vérité ledger  ≠  settlement banque
+```
+
+Mappez chacun à un état explicite. Persistez les transitions. Réconciliez à l'horaire. Ne laissez jamais un spinner inventer de la certitude.
+
+> **Shippez des états que la finance peut défendre. Les booléens, c'est pour les feature flags — pas pour l'argent.**
