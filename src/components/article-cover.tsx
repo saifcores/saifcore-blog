@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { getArticleCover } from "@/lib/article-covers";
+import { getArticleCoverVariants } from "@/lib/article-covers";
 
 type Props = {
   slug: string;
@@ -16,21 +16,33 @@ export function ArticleCover({
   priority = false,
   className = "",
 }: Props) {
-  const src = getArticleCover(slug, cover);
+  const { dark, light } = getArticleCoverVariants(slug, cover);
+  const sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 640px";
 
   return (
     <div
       className={`relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-code)] ${className}`}
     >
       <Image
-        src={src}
+        src={dark}
         alt=""
         fill
         unoptimized
         priority={priority}
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 640px"
-        className="object-cover"
+        sizes={sizes}
+        className={`object-cover ${light ? "cover-variant-dark" : ""}`}
       />
+      {light && (
+        <Image
+          src={light}
+          alt=""
+          fill
+          unoptimized
+          priority={priority}
+          sizes={sizes}
+          className="cover-variant-light object-cover"
+        />
+      )}
       <span className="sr-only">{title}</span>
     </div>
   );

@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
-import { getArticleCover } from "@/lib/article-covers";
+import { getArticleCoverVariants } from "@/lib/article-covers";
 import type { PostMeta } from "@/lib/types";
 
 type Props = {
@@ -13,7 +13,9 @@ type Props = {
 export async function ArticleCard({ post, locale, priority = false }: Props) {
   const t = await getTranslations("articles");
   const href = `/articles/${post.slug}`;
-  const coverSrc = getArticleCover(post.slug, post.cover);
+  const cover = getArticleCoverVariants(post.slug, post.cover);
+  const coverSizes =
+    "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw";
   const tagLabel = t(`kinds.${post.kind}`);
 
   const formatDate = (iso: string) =>
@@ -32,14 +34,27 @@ export async function ArticleCard({ post, locale, priority = false }: Props) {
         aria-hidden
       >
         <Image
-          src={coverSrc}
+          src={cover.dark}
           alt=""
           fill
           unoptimized
           priority={priority}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="post-card-image object-cover"
+          sizes={coverSizes}
+          className={`post-card-image object-cover ${
+            cover.light ? "cover-variant-dark" : ""
+          }`}
         />
+        {cover.light && (
+          <Image
+            src={cover.light}
+            alt=""
+            fill
+            unoptimized
+            priority={priority}
+            sizes={coverSizes}
+            className="post-card-image cover-variant-light object-cover"
+          />
+        )}
       </Link>
 
       <div className="mt-5 flex flex-1 flex-col">

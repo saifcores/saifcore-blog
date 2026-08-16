@@ -17,6 +17,8 @@ draft: true
 cover: /images/articles/retry-storm-double-payout.svg
 ---
 
+The callback lied with a word. This one lies with silence.
+
 A mobile money provider went **slow, not down** — the worst kind of failure. Requests were taking four, five, sometimes eight seconds instead of the usual few hundred milliseconds.
 
 A client integration with an eager retry policy started firing the same payout request again after a three-second timeout, still believing the first attempt had failed. It hadn't. It was just late.
@@ -67,7 +69,7 @@ No incident, no reconciliation surprise, no call to the merchant to explain a re
 
 The lesson wasn't “add retries carefully.” It was that idempotency has to be derived from the **business intent** of a command, not from a client-side identifier that a retry can accidentally reset.
 
-Same rule as in [scalable fintech systems](/articles/scalable-fintech-systems) and [when SUCCESS is not settled](/articles/when-success-is-not-settled): retries are inevitable; ambiguous network answers are not permission to debit again.
+Same rule as in [scalable fintech systems](/articles/scalable-fintech-systems) and [the callback that said SUCCESS](/articles/when-success-is-not-settled): retries are inevitable; ambiguous network answers are not permission to debit again.
 
 If the key can change between attempts, the safety net was never actually there.
 

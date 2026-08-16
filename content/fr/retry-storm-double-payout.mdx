@@ -18,6 +18,8 @@ draft: true
 cover: /images/articles/retry-storm-double-payout.svg
 ---
 
+Le callback a menti avec un mot. Celui-ci ment avec le silence.
+
 Un provider mobile money est devenu **lent, pas indisponible** — le pire type de panne. Les requêtes prenaient quatre, cinq, parfois huit secondes au lieu des quelques centaines de millisecondes habituelles.
 
 Une intégration cliente avec une politique de retry trop gourmande s'est mise à renvoyer la même demande de payout après un timeout de trois secondes, persuadée que la première tentative avait échoué. Elle n'avait pas échoué. Elle était juste en retard.
@@ -68,7 +70,7 @@ Pas d'incident, pas de surprise en rapprochement, pas d'appel au marchand pour e
 
 La leçon n'était pas « ajoutez des retries avec précaution ». C'était que l'idempotence doit se dériver de l'**intention métier** d'une commande, pas d'un identifiant côté client qu'un retry peut réinitialiser par accident.
 
-Même règle que dans [systèmes fintech à l'échelle](/fr/articles/scalable-fintech-systems) et [quand SUCCESS n'est pas settled](/fr/articles/when-success-is-not-settled) : les retries sont inévitables ; une réponse réseau ambiguë n'autorise pas un second débit.
+Même règle que dans [systèmes fintech à l'échelle](/fr/articles/scalable-fintech-systems) et [le callback qui a dit SUCCESS](/fr/articles/when-success-is-not-settled) : les retries sont inévitables ; une réponse réseau ambiguë n'autorise pas un second débit.
 
 Si la clé peut changer entre deux tentatives, le filet de sécurité n'a jamais vraiment existé.
 

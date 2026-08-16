@@ -181,6 +181,29 @@ body {
     linear-gradient(90deg, rgba(37, 99, 235, 0.04) 1px, transparent 1px);
 }
 
+/* Cover artwork ships one file per theme. Dark is the default so crawlers and
+   no-JS clients get the canonical asset. The dark rules come last so that a
+   nested [data-theme="dark"] scope (the admin shell) wins over a light page. */
+.cover-variant-light {
+  display: none;
+}
+
+[data-theme="light"] .cover-variant-dark {
+  display: none;
+}
+
+[data-theme="light"] .cover-variant-light {
+  display: block;
+}
+
+[data-theme="dark"] .cover-variant-light {
+  display: none;
+}
+
+[data-theme="dark"] .cover-variant-dark {
+  display: block;
+}
+
 .prose-article {
   display: flex;
   flex-direction: column;

@@ -42,7 +42,7 @@ This blog exists for teams that move money in markets where callbacks are late, 
 
 The rest of the catalog is the same thesis, applied:
 
-- [When `SUCCESS` is not settled](/articles/when-success-is-not-settled) — provider vocabulary vs finance vocabulary
+- [The callback that said `SUCCESS`](/articles/when-success-is-not-settled) — Friday Paid. Monday the row was gone.
 - [The retry storm that almost paid a merchant twice](/articles/retry-storm-double-payout) — idempotency as a business key
 - [Payment gateway system design](/articles/payment-gateway-system-design) — auth → capture → settle → payout end to end
 - [Stop defaulting to microservices in West African fintech](/articles/stop-microservices-first-west-africa) — ops headcount before service diagrams
@@ -56,3 +56,5 @@ UI copy  ≠  provider status  ≠  ledger truth  ≠  bank settlement
 Map each of those to an explicit state. Persist transitions. Reconcile on a schedule. Never let a spinner invent certainty.
 
 > **Ship states finance can defend. Booleans are for feature flags — not for money.**
+
+The sequel is what happens when you ship the three states and still copy the provider's word: [The callback that said `SUCCESS`](/articles/when-success-is-not-settled).

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e9eef5"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="rgba(15,23,42,0.05)" stroke-width="1"/>
+    </pattern>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <rect width="1200" height="675" fill="url(#grid)"/>
+  <ellipse cx="200" cy="120" rx="180" ry="120" fill="#2563eb" opacity="0.1"/>
+  <ellipse cx="1000" cy="560" rx="220" ry="140" fill="#10b981" opacity="0.09"/>
+  
+  <g filter="url(#glow)">
+    <text x="600" y="168" text-anchor="middle" fill="#1d4ed8" font-family="ui-monospace,monospace" font-size="22">{ status: "SUCCESS" }</text>
+    <rect x="160" y="220" width="340" height="200" rx="16" fill="rgba(16,185,129,0.16)" stroke="#10b981" stroke-width="2"/>
+    <circle cx="330" cy="285" r="30" fill="rgba(16,185,129,0.3)" stroke="#10b981" stroke-width="2"/>
+    <path d="M316 285 L326 295 L348 271" stroke="#059669" stroke-width="3.5" fill="none"/>
+    <text x="330" y="350" text-anchor="middle" fill="#047857" font-size="26" font-weight="700">PAID</text>
+    <text x="330" y="382" text-anchor="middle" fill="#475569" font-size="13">FRI 16:43</text>
+    <text x="600" y="330" text-anchor="middle" fill="#475569" font-size="40">≠</text>
+    <rect x="700" y="220" width="340" height="200" rx="16" fill="rgba(244,63,94,0.12)" stroke="#f43f5e" stroke-width="2" stroke-dasharray="10 7"/>
+    <text x="870" y="278" text-anchor="middle" fill="#be123c" font-family="ui-monospace,monospace" font-size="16">OM-88421</text>
+    <line x1="780" y1="310" x2="960" y2="310" stroke="#f43f5e" stroke-width="2" opacity="0.55"/>
+    <text x="870" y="360" text-anchor="middle" fill="#be123c" font-size="26" font-weight="700">MISSING</text>
+    <text x="870" y="392" text-anchor="middle" fill="#475569" font-size="13">MON 09:12</text>
+    <text x="600" y="500" text-anchor="middle" fill="#475569" font-size="14">CALLBACK LIE · SETTLEMENT TRUTH</text>
+  </g>
+  <text x="48" y="628" fill="rgba(15,23,42,0.4)" font-family="ui-sans-serif,system-ui,sans-serif" font-size="14" font-weight="600" letter-spacing="0.2em">SAIFCORE</text>
+</svg>

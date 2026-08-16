@@ -17,9 +17,9 @@ draft: true
 cover: /images/articles/mobile-money-integration-patterns.png
 ---
 
-Mobile money rails in West Africa are not uniform. Wave, Orange Money, and Free Money each expose different callback semantics, settlement windows, and retry behaviours.
+Mobile money rails in West Africa are not uniform. Providers expose different callback semantics, settlement windows, and retry behaviours.
 
-A payment marked `SUCCESS` by the provider is not always a settled transaction. Building as though it is will surface as a reconciliation nightmare six months into production. The sharper vocabulary lives in [when SUCCESS is not settled](/articles/when-success-is-not-settled) — this article is the integration pattern that prevents the trap.
+A payment marked `SUCCESS` by the provider is not always a settled transaction. Building as though it is will surface as a reconciliation nightmare six months into production. The sharper vocabulary lives in [the callback that said SUCCESS](/articles/when-success-is-not-settled) — this article is the integration pattern that prevents the trap.
 
 ## Decouple initiation from confirmation
 
@@ -55,27 +55,27 @@ Never set `settledAt` on the first `SUCCESS` callback. Map provider vocabulary i
 
 @Transactional
 public PaymentIntent handleCallback(CallbackPayload payload) {
-  verifyHmac(payload); // reject spoofed SUCCESS
+verifyHmac(payload); // reject spoofed SUCCESS
 
-  PaymentIntent intent = repository
-    .findByProviderRef(payload.getReference())
-    .orElseThrow(() -> new UnknownReferenceException(payload.getReference()));
+PaymentIntent intent = repository
+.findByProviderRef(payload.getReference())
+.orElseThrow(() -> new UnknownReferenceException(payload.getReference()));
 
-  if (intent.isTerminal()) {
-    return intent; // idempotent no-op
-  }
+if (intent.isTerminal()) {
+return intent; // idempotent no-op
+}
 
-  ProviderStatus mapped = adapter.mapStatus(payload.getCode());
-  switch (mapped) {
-    case ACCEPTED -> intent.transition(PROVIDER_ACK);
-    case DEBITED -> intent.transition(FUNDS_CAPTURED);
-    case SETTLED -> intent.transition(SETTLED);
-    case FAILED -> intent.transition(FAILED);
-    default -> auditLog.unknown(payload);
-  }
+ProviderStatus mapped = adapter.mapStatus(payload.getCode());
+switch (mapped) {
+case ACCEPTED -> intent.transition(PROVIDER_ACK);
+case DEBITED -> intent.transition(FUNDS_CAPTURED);
+case SETTLED -> intent.transition(SETTLED);
+case FAILED -> intent.transition(FAILED);
+default -> auditLog.unknown(payload);
+}
 
-  auditLog.record(intent, payload.getRawBody());
-  return repository.save(intent);
+auditLog.record(intent, payload.getRawBody());
+return repository.save(intent);
 }`}</CodeBlock>
 
 <Callout variant="warning">
@@ -86,22 +86,22 @@ public PaymentIntent handleCallback(CallbackPayload payload) {
 
 ## Reconciliation as a first-class job
 
-| Cadence | Scope | Action |
-| --- | --- | --- |
-| Every 5 min | Active intents past SLA | Poll provider status API |
-| Hourly / daily | Prior-day batch | Match settlement file rows |
-| Manual queue | `UNKNOWN` after N polls | Never auto-success |
+| Cadence        | Scope                   | Action                     |
+| -------------- | ----------------------- | -------------------------- |
+| Every 5 min    | Active intents past SLA | Poll provider status API   |
+| Hourly / daily | Prior-day batch         | Match settlement file rows |
+| Manual queue   | `UNKNOWN` after N polls | Never auto-success         |
 
 Treat divergence as an **alert**, not a spreadsheet surprise.
 
 ## Provider variance you must design for
 
-| Concern | What varies | Design rule |
-| --- | --- | --- |
-| Callback timing | Seconds → never | Intent first; recon closes gaps |
-| Status names | `SUCCESS` ≠ settled | Internal enum + adapter table |
-| Settlement | Instant float vs T+1 CSV | Separate `FUNDS_CAPTURED` / `SETTLED` |
-| Retries | Client + provider | Idempotency key on initiation |
+| Concern         | What varies              | Design rule                           |
+| --------------- | ------------------------ | ------------------------------------- |
+| Callback timing | Seconds → never          | Intent first; recon closes gaps       |
+| Status names    | `SUCCESS` ≠ settled      | Internal enum + adapter table         |
+| Settlement      | Instant float vs T+1 CSV | Separate `FUNDS_CAPTURED` / `SETTLED` |
+| Retries         | Client + provider        | Idempotency key on initiation         |
 
 ## Bottom line
 

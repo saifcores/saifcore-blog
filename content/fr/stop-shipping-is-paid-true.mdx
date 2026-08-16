@@ -42,7 +42,7 @@ Ce blog s'adresse aux équipes qui déplacent de l'argent là où les callbacks 
 
 Le reste du catalogue, c'est la même thèse, appliquée :
 
-- [Quand `SUCCESS` n'est pas settled](/fr/articles/when-success-is-not-settled) — vocabulaire provider vs vocabulaire finance
+- [Le callback qui a dit `SUCCESS`](/fr/articles/when-success-is-not-settled) — vendredi Payé. Lundi, la ligne avait disparu.
 - [La tempête de retries qui a failli payer un marchand deux fois](/fr/articles/retry-storm-double-payout) — l'idempotence comme clé métier
 - [Conception d'une payment gateway](/fr/articles/payment-gateway-system-design) — auth → capture → settle → payout de bout en bout
 - [Arrêtez le réflexe microservices en fintech ouest-africaine](/fr/articles/stop-microservices-first-west-africa) — l'effectif ops avant les diagrammes de services
@@ -56,3 +56,5 @@ Copie UI  ≠  statut provider  ≠  vérité ledger  ≠  settlement banque
 Mappez chacun à un état explicite. Persistez les transitions. Réconciliez à l'horaire. Ne laissez jamais un spinner inventer de la certitude.
 
 > **Shippez des états que la finance peut défendre. Les booléens, c'est pour les feature flags — pas pour l'argent.**
+
+La suite, c'est ce qui arrive quand vous shipez les trois états et copiez encore le mot du provider : [Le callback qui a dit `SUCCESS`](/fr/articles/when-success-is-not-settled).

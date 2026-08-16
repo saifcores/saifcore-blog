@@ -23,7 +23,7 @@ A payment gateway is not a bank. It is the licensed intermediary that moves mone
 
 Interview diagrams often stop at "call Visa." Production systems fail in the gaps: the API died before the ledger write, the merchant webhook was down for a day, or two retries both reached the network. This piece walks the full lifecycle — domain first, then a design that works for a few merchants, then the pieces that survive Stripe-scale load.
 
-The vocabulary and failure modes map cleanly onto the same boundaries we use for mobile money in [scalable fintech systems](/articles/scalable-fintech-systems) and [when SUCCESS is not settled](/articles/when-success-is-not-settled).
+The vocabulary and failure modes map cleanly onto the same boundaries we use for mobile money in [scalable fintech systems](/articles/scalable-fintech-systems) and [the callback that said SUCCESS](/articles/when-success-is-not-settled).
 
 ## Domain: who moves the money
 

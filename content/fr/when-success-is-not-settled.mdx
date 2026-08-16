@@ -1,10 +1,11 @@
 ---
-title: Quand `SUCCESS` n'est pas un règlement
+title: Le callback qui a dit `SUCCESS`
 excerpt: >-
-  Le paiement est « réussi » mais la finance ne trouve pas l'argent. Sémantique
-  des callbacks fournisseurs en Afrique de l'Ouest — et le modèle d'états qui
-  comble l'écart.
+  Vendredi, l'application affichait Payé. Lundi, 15 000 XOF manquaient. Le
+  callback s'appelait SUCCESS. C'était tout le problème.
 kind: writing
+publishedAt: "2026-08-13"
+cover: /images/articles/when-success-is-not-settled.svg
 publishedAt: '2025-07-19'
 tags:
   - mobile-money
@@ -42,136 +43,71 @@ Si votre modèle domaine n'a qu'un booléen — `isSuccessful` — vous finirez 
 ## La séquence que la plupart des équipes supposent
 
 ```mermaid
-sequenceDiagram
-  participant User
-  participant App
-  participant API
-  participant Provider
-  participant Ledger
-
-  User->>App: Payer
-  App->>API: Créer intention
-  API->>Provider: Demande débit
-  Provider-->>API: Callback SUCCESS
-  API->>Ledger: Écriture
-  API-->>App: Écran succès
-  Note over Ledger: Finance attend match settlement
-  Note over Provider: Fonds encore en float / batch pending
+flowchart TB
+  A["Ven 16h42 · Callback SUCCESS"] --> B["Ven 16h43 · L'application affiche Payé"]
+  B --> C["Ven 16h44 · FAILED manqué"]
+  C --> D["Samedi · Toujours PENDING"]
+  D --> E["Lundi 09h12 · Ligne manquante"]
 ```
 
-Le bug n'est pas le callback. C'est **poster au grand livre sur la mauvaise transition**.
+## Lundi, 09h12
 
-## Scinder vos états avant vos adaptateurs
+La finance ouvre le fichier batch. `OM-88421` ne s'y trouve pas.
 
-Remplacez un seul `SUCCESS` par un vocabulaire interne qui survit aux renommages fournisseur :
+Voici ce que le week-end a masqué. Vendredi 16h44, un callback `FAILED` a quitté le provider. Votre endpoint était saturé : il n'est jamais arrivé. Samedi, l'API de statut répondait encore succès — règlement toujours en attente. Personne côté ops n'a vérifié — le ticket était déjà au vert.
 
-```text
-INITIATED → SENT_TO_PROVIDER → PROVIDER_ACK → FUNDS_CAPTURED → SETTLED
-                                      ↘ FAILED
-                                      ↘ EXPIRED / UNKNOWN (rapprochement)
-```
+Trois systèmes, trois vérités. L'application indique payé. Le provider indique pending. La banque n'indique rien. Les 15 000 XOF n'ont jamais bougé.
 
-Règles valables quel que soit le fournisseur :
-
-1. **Copie utilisateur** suit `PROVIDER_ACK` ou `FUNDS_CAPTURED` — jamais `SETTLED` sauf si vous pouvez le défendre devant la finance.
-2. **Écritures grand livre** à `FUNDS_CAPTURED` (wallet débité) ou `SETTLED` (batch clos) — une politique, documentée en ADR. Mélanger les deux sans noms, c'est la source des litiges.
-3. **Jobs de rapprochement** comblent l'écart entre `FUNDS_CAPTURED` et `SETTLED` ; ils n'inventent pas d'argent.
-
-<CodeBlock title="Handler callback — mapper le code fournisseur, ne pas le copier">{`public enum InternalPaymentState {
-  INITIATED, SENT, PROVIDER_ACK, FUNDS_CAPTURED,
-  SETTLED, FAILED, EXPIRED
-}
-
-public PaymentIntent handleCallback(CallbackPayload payload) {
-PaymentIntent intent = loadOrThrow(payload.getReference());
-
-if (intent.isTerminal()) {
-return intent; // no-op idempotent
-}
-
-ProviderStatus mapped = adapter.mapStatus(payload.getCode());
-
-switch (mapped) {
-case ACCEPTED -> intent.transition(PROVIDER_ACK);
-case DEBITED -> intent.transition(FUNDS_CAPTURED);
-case SETTLED -> intent.transition(SETTLED);
-case FAILED -> intent.transition(FAILED);
-default -> auditLog.unknown(payload);
-}
-
-auditLog.record(intent, payload.getRawBody());
-return repository.save(intent);
-}`}</CodeBlock>
+Pas une panne : un mot qui signifiait _accepté_, stocké comme _confirmé_, reporté comme _settled_.
 
 <Callout variant="warning">
-  Ne mettez pas `settledAt` sur `PROVIDER_ACK`. Si votre ORM n'a qu'un
-  timestamp, renommez en `providerAckAt` ou scindez les colonnes maintenant —
-  avant que la finance n'exporte avec la mauvaise sémantique.
+  Les providers ne partagent pas le même dictionnaire. Un `SUCCESS` peut
+  signifier une requête acceptée chez l'un, une transaction réussie chez
+  l'autre, ou n'être qu'un état intermédiaire dans un troisième système. Le mot
+  n'est pas le moment.
 </Callout>
 
-## Table d'adaptation par fournisseur (gardez-la simple)
+## Arrêtez de recopier le mot
 
-Maintenez une table de mapping explicite — versionnée, revue quand les docs changent sans annonce :
+Le premier `SUCCESS` est un **ACK** : la requête a été prise en compte. En cours de traitement. Pas Payé.
 
-| Champ fournisseur                   | Votre état         | Écriture grand livre ? | « Succès » utilisateur ? |
-| ----------------------------------- | ------------------ | ---------------------- | ------------------------ |
-| `status=SUCCESS` (callback v1)      | `PROVIDER_ACK`     | Non                    | « En cours »             |
-| `status=COMPLETED`                  | `FUNDS_CAPTURED`   | Oui (politique A)      | « Payé »                 |
-| Ligne settlement présente           | `SETTLED`          | Oui (politique B)      | inchangé                 |
-| API statut `PENDING` après callback | rester / `UNKNOWN` | Non                    | « En cours »             |
+Un statut provider n'est donc pas un statut métier. C'est un événement à interpréter.
 
-Politique A vs B est une décision métier. L'exigence technique : **un choix documenté**, pas un mélange implicite par sprint.
+Ce ne sont pas trois traductions du même mot. Ce sont trois faits différents :
 
-## Ce que chaque équipe doit voir
-
-**Support** — référence fournisseur, état interne, heure du dernier callback — pas une coche verte empruntée à l'app.
-
-**Finance** — rapport indexé sur `SETTLED` (ou votre point de reconnaissance) avec id batch fournisseur.
-
-**Analytics produit** — entonnoir sur `FUNDS_CAPTURED` si c'est la fin de l'expérience utilisateur — mais libellé honnête dans la légende du dashboard.
-
-Quand ces vues divergent, les incidents passent de « qui a cassé la prod ? » à « quel état est bloqué ? » — la différence entre une semaine d'archéologie Slack et un rapprochement ciblé.
-
-## Le rapprochement boucle le cycle
-
-Planifiez trois niveaux (depuis l'[article patterns](/fr/articles/mobile-money-integration-patterns)) :
-
-- **Chemin chaud** — toutes les 5 minutes, poll statut pour intentions en `PROVIDER_ACK` ou `FUNDS_CAPTURED` au-delà du SLA fournisseur.
-- **Batch quotidien** — comparer lignes fichier settlement à `SETTLED` ; alerter sur orphelins dans les deux sens.
-- **File manuelle** — `UNKNOWN` après N polls ; jamais d'auto-success.
+**ACK** — le provider a reçu ou accepté la demande.
+**CAPTURED** — la valeur a effectivement été débitée ou créditée sur le rail.
+**SETTLED** — la transaction est reconnue dans le règlement ou le rapprochement.
+**FAILED** même si un callback antérieur annonçait un succès.
 
 ```mermaid
-sequenceDiagram
-  participant API
-  participant Provider
-  participant Recon
-  participant Ledger
-
-  Provider->>API: Callback SUCCESS (ack)
-  API->>API: PROVIDER_ACK
-  Recon->>Provider: Poll statut (T+15m)
-  Provider-->>Recon: DEBITED
-  API->>API: FUNDS_CAPTURED
-  API->>Ledger: Écriture (politique A)
-  Recon->>Provider: Fichier settlement (T+1j)
-  API->>API: SETTLED
+flowchart LR
+  CB["SUCCESS"] --> ACK["ACK · accepté"]
+  ACK --> CAP["CAPTURED · valeur débitée"]
+  CAP --> SET["SETTLED · rapproché"]
+  ACK --> FAIL["FAILED"]
 ```
 
-## Checklist avant le prochain fournisseur
+Exposez ACK ou CAPTURED à l'utilisateur. Écrivez au ledger à CAPTURED ou à SETTLED — **une seule politique, formellement documentée**. Mélangez les deux, et le lundi matin recommence. Le rapprochement comble un écart ; il ne crée pas de francs.
 
-- [ ] Enum d'états interne revue avec la finance — pas seulement le backend
-- [ ] Table mapping adaptateur dans le repo, pas dans la tête d'un ingénieur
-- [ ] Copie utilisateur testée pour `PROVIDER_ACK` vs `SETTLED`
-- [ ] ADR grand livre indique quelle transition poste les écritures
-- [ ] Alertes rapprochement sur `FUNDS_CAPTURED` bloqué, pas seulement `PENDING`
-- [ ] Id de corrélation sur callback, poll et ligne settlement
+Ne posez jamais `settledAt` sur le premier callback. Le handler qui mappe au lieu de recopier est détaillé dans [les patterns d'intégration mobile money](/fr/articles/mobile-money-integration-patterns).
 
-<Callout variant="info">
-  Réflexion liée : [La solitude de l'ingénieur
-  paiement](/fr/articles/loneliness-of-the-payment-engineer) — pourquoi ce
-  travail de vocabulaire reste invisible jusqu'au sixième mois.
-</Callout>
+## Le lundi qui aurait dû arriver
 
----
+Si le `SUCCESS` de vendredi était devenu ACK, l'application aurait affiché _En cours_. Le support aurait vu une intention active. Le `FAILED` manqué serait remonté au poll suivant. Et le fichier du lundi aurait été fidèle : aucune ligne, parce que rien n'avait été capturé.
 
-**Études de cas :** [SDK Paiement Pan-Africain](https://saifcore.tech/fr/systems) et [grand livre partie double](https://saifcore.tech/fr/systems) sur le portfolio. Bloqué entre docs fournisseur et rapports finance ? [Réserver un audit architecture 30 min](https://saifcore.tech/fr#contact).
+La finance n'aurait pas cherché un fantôme dans un lancement au vert. Elle aurait traité un paiement bloqué.
+
+Mêmes rails. Même callback. Dictionnaire différent.
+
+> **Un callback est une phrase dans la langue du provider. Votre architecture doit la traduire avant qu'elle ne devienne un fait financier.**
+
+## Le mensonge suivant
+
+`SUCCESS` était le premier mensonge. Le suivant sera un silence.
+
+Le provider n'est pas tombé : il est devenu lent. Trois secondes de silence — assez pour qu'un client impatient relance, puis relance encore. Même marchand, même montant, trois virements en vol.
+
+Quatre-vingt-dix secondes avant un double paiement.
+
+**[Ce qui l'a arrêté →](/fr/articles/retry-storm-double-payout)**
