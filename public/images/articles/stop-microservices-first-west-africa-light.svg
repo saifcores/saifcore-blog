@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-hidden="true">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-hidden="true" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#f8fafc"/>
@@ -9,6 +9,14 @@
       <stop offset="0%" stop-color="#2563eb"/>
       <stop offset="100%" stop-color="#10b981"/>
     </linearGradient>
+    <radialGradient id="haloBlue">
+      <stop offset="0%" stop-color="#2563eb" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#2563eb" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="haloGreen">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.09"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
     <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
       <path d="M48 0H0V48" fill="none" stroke="rgba(15,23,42,0.05)" stroke-width="1"/>
     </pattern>
@@ -19,25 +27,33 @@
   </defs>
   <rect width="1200" height="675" fill="url(#bg)"/>
   <rect width="1200" height="675" fill="url(#grid)"/>
-  <ellipse cx="200" cy="120" rx="180" ry="120" fill="#2563eb" opacity="0.1"/>
-  <ellipse cx="1000" cy="560" rx="220" ry="140" fill="#10b981" opacity="0.09"/>
+  <ellipse cx="180" cy="90" rx="380" ry="300" fill="url(#haloBlue)"/>
+  <ellipse cx="1030" cy="600" rx="420" ry="320" fill="url(#haloGreen)"/>
   
   <g filter="url(#glow)">
     <rect x="280" y="200" width="280" height="280" rx="16" fill="rgba(37,99,235,0.18)" stroke="#2563eb" stroke-width="2"/>
     <line x1="280" y1="295" x2="560" y2="295" stroke="rgba(15,23,42,0.15)" stroke-width="2"/>
     <line x1="280" y1="380" x2="560" y2="380" stroke="rgba(15,23,42,0.15)" stroke-width="2"/>
-    <text x="420" y="260" text-anchor="middle" fill="#1d4ed8" font-size="16" font-weight="700">AUTH</text>
-    <text x="420" y="345" text-anchor="middle" fill="#1d4ed8" font-size="16" font-weight="700">PAYMENTS</text>
-    <text x="420" y="430" text-anchor="middle" fill="#1d4ed8" font-size="16" font-weight="700">NOTIFY</text>
-    <text x="420" y="520" text-anchor="middle" fill="#059669" font-size="14">MODULAR MONOLITH</text>
+    
+    
+    
+    
     <g opacity="0.45">
       <rect x="700" y="210" width="100" height="60" rx="8" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 4"/>
       <rect x="840" y="210" width="100" height="60" rx="8" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 4"/>
       <rect x="700" y="300" width="100" height="60" rx="8" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 4"/>
       <rect x="840" y="300" width="100" height="60" rx="8" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 4"/>
       <rect x="770" y="390" width="100" height="60" rx="8" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 4"/>
-      <text x="820" y="500" text-anchor="middle" fill="#475569" font-size="13">12 SERVICES · 2 OPS</text>
+      
     </g>
   </g>
-  <text x="48" y="628" fill="rgba(15,23,42,0.4)" font-family="ui-sans-serif,system-ui,sans-serif" font-size="14" font-weight="600" letter-spacing="0.2em">SAIFCORE</text>
+  <g>
+    <text x="420" y="260" text-anchor="middle" fill="#1d4ed8" font-size="16" font-weight="700">AUTH</text>
+    <text x="420" y="345" text-anchor="middle" fill="#1d4ed8" font-size="16" font-weight="700">PAYMENTS</text>
+    <text x="420" y="430" text-anchor="middle" fill="#1d4ed8" font-size="16" font-weight="700">NOTIFY</text>
+    <text x="420" y="520" text-anchor="middle" fill="#059669" font-size="14">MODULAR MONOLITH</text>
+    <text x="820" y="500" text-anchor="middle" fill="#475569" font-size="13">12 SERVICES · 2 OPS</text>
+  </g>
+  <rect x="48" y="600" width="26" height="3" rx="1.5" fill="url(#brand)"/>
+  <text x="48" y="632" fill="rgba(15,23,42,0.4)" font-size="13" font-weight="700" letter-spacing="0.22em">SAIFCORE</text>
 </svg>
