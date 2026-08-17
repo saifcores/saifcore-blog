@@ -1,41 +1,56 @@
 ---
 title: Mobile money integration patterns for African fintech
 excerpt: >-
-  Wave, Orange Money, Free Money: callback traps, HMAC verification, and
-  reconciliation jobs — architected so SUCCESS never pretends to be settled.
+  Callback traps, HMAC verification, and reconciliation jobs — architected so
+  SUCCESS never pretends to be settled.
 kind: code
-publishedAt: '2025-03-18'
+publishedAt: "2025-03-18"
 tags:
   - mobile-money
-  - wave
-  - orange-money
+  - callbacks
   - fintech
   - reconciliation
+  - architecture
 relatedProjects:
   - pan-african-payment-sdk
 draft: true
 cover: /images/articles/mobile-money-integration-patterns.png
 ---
 
-Mobile money rails in West Africa are not uniform. Providers expose different callback semantics, settlement windows, and retry behaviours.
+[The callback that said SUCCESS](/articles/when-success-is-not-settled) is the vocabulary. This is the machine.
 
-A payment marked `SUCCESS` by the provider is not always a settled transaction. Building as though it is will surface as a reconciliation nightmare six months into production. The sharper vocabulary lives in [the callback that said SUCCESS](/articles/when-success-is-not-settled) — this article is the integration pattern that prevents the trap.
+A provider status is not a business status. It is an event to interpret. The handler that copies `SUCCESS` into `settledAt` is Monday morning.
+
+Mobile money rails in West Africa are not uniform. They do not share a dictionary, a settlement window, or a retry behaviour. Your domain must.
+
+## Three facts, not three translations
+
+These are not labels for the same moment:
+
+**ACK** — the rail received or accepted the request.
+**CAPTURED** — value actually moved: debit or credit.
+**SETTLED** — finance recognizes the row in settlement or reconciliation.
+**FAILED** even if an earlier callback announced success.
+
+Show the user ACK or CAPTURED. Post to the ledger at CAPTURED or at SETTLED — **one policy, formally documented**. Mix them, and the settlement file will not match the app.
+
+Never set `settledAt` on the first callback.
 
 ## Decouple initiation from confirmation
 
-Most providers deliver a webhook asynchronously — sometimes seconds later, sometimes minutes, occasionally never if your endpoint was down.
+Most providers deliver a webhook asynchronously — seconds later, minutes later, occasionally never if your endpoint was down. Webhooks also arrive twice, late, or out of order. That is normal. Treating the first packet as truth is not.
 
 Your architecture must:
 
 1. Store the **intent** immediately on initiation.
-2. Update state only after a **verified** callback (or status poll).
+2. Update state only after a **verified** callback — or a status poll.
 3. Run reconciliation for intents still pending past the provider SLA.
 
 ```mermaid
 flowchart LR
-  Init["Create intent"] --> Sent["SENT_TO_PROVIDER"]
-  Sent --> Ack["PROVIDER_ACK"]
-  Ack --> Captured["FUNDS_CAPTURED"]
+  Init["Create intent"] --> Sent["SENT"]
+  Sent --> Ack["ACK"]
+  Ack --> Captured["CAPTURED"]
   Captured --> Settled["SETTLED"]
   Ack --> Failed["FAILED"]
   Sent --> Recon["Recon poll"]
@@ -44,67 +59,76 @@ flowchart LR
   Recon --> Failed
 ```
 
-## Map provider codes — do not mirror them
+## Map the event — do not copy the word
 
-Never set `settledAt` on the first `SUCCESS` callback. Map provider vocabulary into an internal state machine that finance, support, and product can share.
+Each rail gets an adapter. The adapter owns that rail's contract. The handler never reads `SUCCESS`.
 
-<CodeBlock title="Callback handler — verify, map, transition">{`public enum InternalPaymentState {
-  INITIATED, SENT, PROVIDER_ACK, FUNDS_CAPTURED,
-  SETTLED, FAILED, EXPIRED
+<CodeBlock title="Callback handler — verify, interpret, transition">{`public enum InternalPaymentState {
+  INITIATED, SENT, ACK, CAPTURED, SETTLED, FAILED, EXPIRED
 }
 
 @Transactional
 public PaymentIntent handleCallback(CallbackPayload payload) {
-verifyHmac(payload); // reject spoofed SUCCESS
+verifyHmac(payload);
 
 PaymentIntent intent = repository
 .findByProviderRef(payload.getReference())
 .orElseThrow(() -> new UnknownReferenceException(payload.getReference()));
 
-if (intent.isTerminal()) {
-return intent; // idempotent no-op
+if (!intent.canAdvance()) {
+auditLog.duplicateOrStale(intent, payload);
+return intent; // persist the raw body; never rewind
 }
 
-ProviderStatus mapped = adapter.mapStatus(payload.getCode());
-switch (mapped) {
-case ACCEPTED -> intent.transition(PROVIDER_ACK);
-case DEBITED -> intent.transition(FUNDS_CAPTURED);
+Fact fact = adapterFor(payload.getRail()).interpret(payload);
+switch (fact) {
+case ACK -> intent.transition(ACK);
+case CAPTURED -> intent.transition(CAPTURED);
 case SETTLED -> intent.transition(SETTLED);
 case FAILED -> intent.transition(FAILED);
-default -> auditLog.unknown(payload);
+case UNKNOWN -> auditLog.unknown(payload); // recon will poll
 }
 
 auditLog.record(intent, payload.getRawBody());
 return repository.save(intent);
 }`}</CodeBlock>
 
+`interpret()` is where the dictionary lives. On one rail, `SUCCESS` is ACK. On another it is CAPTURED. On a third it is only an intermediate state. The word is not the moment — the adapter is.
+
+Transitions are **monotonic**. ACK may become CAPTURED or FAILED. CAPTURED does not become ACK because a late webhook arrived out of order.
+
 <Callout variant="warning">
-  Always verify the callback signature against the provider HMAC key before
-  updating state. Spoofed callbacks that mark SUCCESS without settlement are a
-  real attack vector.
+  Verify the callback signature against the provider HMAC key before any
+  transition. A spoofed SUCCESS that your handler copies into the ledger is not
+  a mapping bug. It is an attack.
 </Callout>
 
 ## Reconciliation as a first-class job
 
+The missed `FAILED`, the webhook that never landed, the status API still saying success while settlement is pending — none of that is an incident if recon is a job.
+
 | Cadence        | Scope                   | Action                     |
 | -------------- | ----------------------- | -------------------------- |
-| Every 5 min    | Active intents past SLA | Poll provider status API   |
+| Every 5 min    | Active intents past SLA | Poll the status API        |
 | Hourly / daily | Prior-day batch         | Match settlement file rows |
 | Manual queue   | `UNKNOWN` after N polls | Never auto-success         |
 
-Treat divergence as an **alert**, not a spreadsheet surprise.
+Treat divergence as an **alert**, not a spreadsheet surprise. Reconciliation closes a gap. It does not create francs.
 
-## Provider variance you must design for
+## What must vary — without copying a spec
 
-| Concern         | What varies              | Design rule                           |
-| --------------- | ------------------------ | ------------------------------------- |
-| Callback timing | Seconds → never          | Intent first; recon closes gaps       |
-| Status names    | `SUCCESS` ≠ settled      | Internal enum + adapter table         |
-| Settlement      | Instant float vs T+1 CSV | Separate `FUNDS_CAPTURED` / `SETTLED` |
-| Retries         | Client + provider        | Idempotency key on initiation         |
+| Concern         | What varies                     | Design rule                          |
+| --------------- | ------------------------------- | ------------------------------------ |
+| Callback timing | Seconds → never                 | Intent first; recon closes gaps      |
+| Status names    | Same word, different fact       | Per-rail adapter; internal enum      |
+| Delivery        | Duplicate, missed, out of order | Idempotent handler; monotonic states |
+| Settlement      | Instant float vs T+1 file       | Separate CAPTURED from SETTLED       |
+| Retries         | Client + provider               | Idempotency key on initiation        |
+
+Retries are the next failure mode. Timeout is not permission to debit again — that pattern is in [the retry storm that almost paid a merchant twice](/articles/retry-storm-double-payout).
 
 ## Bottom line
 
-The systems that scale to millions of transactions without breaking finance are not the ones with the fastest provider SDKs. They are the ones where every money state is **explicit, observable, and recoverable** without manual heroics.
+The systems that survive production are not the ones with the fastest provider SDK. They are the ones where every money state is **explicit, observable, and recoverable** without a Monday hero.
 
-> **Integrate the rail. Own the state machine. Let reconciliation — not optimism — close the loop.**
+> **A callback is a sentence in the provider's language. This handler is the translator. Reconciliation — not the first SUCCESS — closes the loop.**

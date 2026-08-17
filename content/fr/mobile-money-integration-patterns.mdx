@@ -1,41 +1,56 @@
 ---
 title: Patterns d'intégration mobile money pour la fintech africaine
 excerpt: >-
-  Wave, Orange Money, Free Money : pièges de callback, vérification HMAC et jobs
-  de réconciliation — pour que SUCCESS ne prétende jamais être settled.
+  Pièges de callback, vérification HMAC et jobs de réconciliation — pour que
+  SUCCESS ne prétende jamais être settled.
 kind: code
-publishedAt: '2025-03-18'
+publishedAt: "2025-03-18"
 tags:
   - mobile-money
-  - wave
-  - orange-money
+  - callbacks
   - fintech
   - reconciliation
+  - architecture
 relatedProjects:
   - pan-african-payment-sdk
 draft: true
 cover: /images/articles/mobile-money-integration-patterns.png
 ---
 
-Les rails mobile money en Afrique de l'Ouest ne sont pas uniformes. Les providers exposent des sémantiques de callback, des fenêtres de settlement et des comportements de retry différents.
+[Le callback qui a dit SUCCESS](/fr/articles/when-success-is-not-settled) est le vocabulaire. Ceci est la machine.
 
-Un paiement marqué `SUCCESS` par le provider n'est pas toujours une transaction settled. Construire comme si c'était le cas devient un cauchemar de réconciliation six mois après la prod. Le vocabulaire plus précis est dans [le callback qui a dit SUCCESS](/fr/articles/when-success-is-not-settled) — cet article est le pattern d'intégration qui évite le piège.
+Un statut provider n'est pas un statut métier. C'est un événement à interpréter. Le handler qui copie `SUCCESS` dans `settledAt`, c'est le lundi matin.
+
+Les rails mobile money en Afrique de l'Ouest ne sont pas uniformes. Ils ne partagent ni dictionnaire, ni fenêtre de settlement, ni comportement de retry. Votre domaine, si.
+
+## Trois faits, pas trois traductions
+
+Ce ne sont pas des libellés du même moment :
+
+**ACK** — le rail a reçu ou accepté la demande.
+**CAPTURED** — la valeur a effectivement bougé : débit ou crédit.
+**SETTLED** — la finance reconnaît la ligne dans le règlement ou le rapprochement.
+**FAILED** même si un callback antérieur annonçait un succès.
+
+Exposez ACK ou CAPTURED à l'utilisateur. Écrivez au ledger à CAPTURED ou à SETTLED — **une seule politique, formellement documentée**. Mélangez les deux, et le fichier de settlement ne collera pas à l'application.
+
+Ne posez jamais `settledAt` sur le premier callback.
 
 ## Découpler initiation et confirmation
 
-La plupart des providers livrent un webhook de façon asynchrone — parfois en secondes, parfois en minutes, parfois jamais si votre endpoint était down.
+La plupart des providers livrent un webhook de façon asynchrone — secondes, minutes, parfois jamais si votre endpoint était down. Les webhooks arrivent aussi en double, en retard, ou dans le désordre. C'est normal. Traiter le premier paquet comme une vérité, non.
 
 Votre architecture doit :
 
 1. Stocker l'**intent** immédiatement à l'initiation.
-2. Mettre à jour l'état seulement après un callback **vérifié** (ou un status poll).
+2. Mettre à jour l'état seulement après un callback **vérifié** — ou un status poll.
 3. Lancer la réconciliation pour les intents encore pending au-delà du SLA provider.
 
 ```mermaid
 flowchart LR
-  Init["Create intent"] --> Sent["SENT_TO_PROVIDER"]
-  Sent --> Ack["PROVIDER_ACK"]
-  Ack --> Captured["FUNDS_CAPTURED"]
+  Init["Create intent"] --> Sent["SENT"]
+  Sent --> Ack["ACK"]
+  Ack --> Captured["CAPTURED"]
   Captured --> Settled["SETTLED"]
   Ack --> Failed["FAILED"]
   Sent --> Recon["Recon poll"]
@@ -44,67 +59,76 @@ flowchart LR
   Recon --> Failed
 ```
 
-## Mapper les codes provider — ne pas les mirroir
+## Mapper l'événement — ne pas recopier le mot
 
-Ne mettez jamais `settledAt` sur le premier callback `SUCCESS`. Mappez le vocabulaire provider vers une machine d'états interne que finance, support et produit peuvent partager.
+Chaque rail a un adapter. L'adapter possède le contrat de ce rail. Le handler ne lit jamais `SUCCESS`.
 
-<CodeBlock title="Handler de callback — vérifier, mapper, transitionner">{`public enum InternalPaymentState {
-  INITIATED, SENT, PROVIDER_ACK, FUNDS_CAPTURED,
-  SETTLED, FAILED, EXPIRED
+<CodeBlock title="Handler de callback — vérifier, interpréter, transitionner">{`public enum InternalPaymentState {
+  INITIATED, SENT, ACK, CAPTURED, SETTLED, FAILED, EXPIRED
 }
 
 @Transactional
 public PaymentIntent handleCallback(CallbackPayload payload) {
-verifyHmac(payload); // rejeter les SUCCESS spoofés
+verifyHmac(payload);
 
 PaymentIntent intent = repository
 .findByProviderRef(payload.getReference())
 .orElseThrow(() -> new UnknownReferenceException(payload.getReference()));
 
-if (intent.isTerminal()) {
-return intent; // no-op idempotent
+if (!intent.canAdvance()) {
+auditLog.duplicateOrStale(intent, payload);
+return intent; // persister le body brut ; ne jamais reculer
 }
 
-ProviderStatus mapped = adapter.mapStatus(payload.getCode());
-switch (mapped) {
-case ACCEPTED -> intent.transition(PROVIDER_ACK);
-case DEBITED -> intent.transition(FUNDS_CAPTURED);
+Fact fact = adapterFor(payload.getRail()).interpret(payload);
+switch (fact) {
+case ACK -> intent.transition(ACK);
+case CAPTURED -> intent.transition(CAPTURED);
 case SETTLED -> intent.transition(SETTLED);
 case FAILED -> intent.transition(FAILED);
-default -> auditLog.unknown(payload);
+case UNKNOWN -> auditLog.unknown(payload); // recon pollera
 }
 
 auditLog.record(intent, payload.getRawBody());
 return repository.save(intent);
 }`}</CodeBlock>
 
+`interpret()` est le dictionnaire. Chez un rail, `SUCCESS` est un ACK. Chez un autre, un CAPTURED. Chez un troisième, un état intermédiaire. Le mot n'est pas le moment — l'adapter l'est.
+
+Les transitions sont **monotones**. ACK peut devenir CAPTURED ou FAILED. CAPTURED ne redevient pas ACK parce qu'un webhook tardif est arrivé dans le désordre.
+
 <Callout variant="warning">
-  Vérifiez toujours la signature du callback contre la clé HMAC du provider
-  avant de mettre à jour l'état. Des callbacks spoofés qui marquent SUCCESS sans
-  settlement sont un vrai vecteur d'attaque.
+  Vérifiez la signature du callback contre la clé HMAC du provider avant toute
+  transition. Un SUCCESS spoofé que votre handler copie dans le ledger n'est pas
+  un bug de mapping. C'est une attaque.
 </Callout>
 
 ## La réconciliation comme job de premier rang
 
+Le `FAILED` manqué, le webhook qui n'est jamais arrivé, l'API de statut qui dit encore succès alors que le règlement est en attente — rien de tout cela n'est un incident si la recon est un job.
+
 | Cadence             | Périmètre                     | Action                                      |
 | ------------------- | ----------------------------- | ------------------------------------------- |
-| Toutes les 5 min    | Intents actifs au-delà du SLA | Poller l'API status provider                |
+| Toutes les 5 min    | Intents actifs au-delà du SLA | Poller l'API de statut                      |
 | Horaire / quotidien | Batch de la veille            | Matcher les lignes du fichier de settlement |
 | File manuelle       | `UNKNOWN` après N polls       | Jamais d'auto-success                       |
 
-Traitez la divergence comme une **alerte**, pas comme une surprise tableur.
+Traitez la divergence comme une **alerte**, pas comme une surprise tableur. Le rapprochement comble un écart. Il ne crée pas de francs.
 
-## Variance provider à concevoir
+## Ce qui doit varier — sans copier une spec
 
-| Préoccupation   | Ce qui varie                | Règle de design                        |
-| --------------- | --------------------------- | -------------------------------------- |
-| Timing callback | Secondes → jamais           | Intent d'abord ; recon ferme les trous |
-| Noms de statut  | `SUCCESS` ≠ settled         | Enum interne + table d'adapter         |
-| Settlement      | Float instantané vs CSV T+1 | Séparer `FUNDS_CAPTURED` / `SETTLED`   |
-| Retries         | Client + provider           | Clé d'idempotence à l'initiation       |
+| Préoccupation   | Ce qui varie                    | Règle de design                        |
+| --------------- | ------------------------------- | -------------------------------------- |
+| Timing callback | Secondes → jamais               | Intent d'abord ; recon ferme les trous |
+| Noms de statut  | Même mot, fait différent        | Adapter par rail ; enum interne        |
+| Livraison       | Doublon, manqué, désordre       | Handler idempotent ; états monotones   |
+| Settlement      | Float instantané vs fichier T+1 | Séparer CAPTURED et SETTLED            |
+| Retries         | Client + provider               | Clé d'idempotence à l'initiation       |
+
+Les retries sont le prochain mode de panne. Un timeout n'autorise pas un second débit — ce pattern est dans [la tempête de retries qui a failli payer un marchand deux fois](/fr/articles/retry-storm-double-payout).
 
 ## En résumé
 
-Les systèmes qui scalent à des millions de transactions sans casser la finance ne sont pas ceux aux SDK provider les plus rapides. Ce sont ceux où chaque état d'argent est **explicite, observable et récupérable** sans héroïsme manuel.
+Les systèmes qui tiennent en production ne sont pas ceux au SDK provider le plus rapide. Ce sont ceux où chaque état d'argent est **explicite, observable et récupérable** sans héros du lundi.
 
-> **Intégrez le rail. Possédez la machine d'états. Laissez la réconciliation — pas l'optimisme — fermer la boucle.**
+> **Un callback est une phrase dans la langue du provider. Ce handler est le traducteur. La réconciliation — pas le premier SUCCESS — ferme la boucle.**
