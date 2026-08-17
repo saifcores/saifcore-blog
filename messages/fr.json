@@ -52,6 +52,12 @@
     "endCtaButton": "Prendre contact",
     "endCtaPortfolio": "Voir le portfolio"
   },
+  "unpublished": {
+    "badge": "Bientôt",
+    "kicker": "Pas encore publié",
+    "body": "Ce texte est encore en cours. Même URL le jour de la publication — rien à re-marquer.",
+    "readPublished": "En attendant, ceux-ci sont en ligne"
+  },
   "footer": {
     "tagline": "Guides d'architecture et analyses d'ingénierie sur paiements, fintech et backends enterprise.",
     "rights": "© {year} Saïfoulaye DIALLO · SAIFCORE Blog",

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticleKindBadge } from "@/components/article-kind-badge";
 import { ArticleCover } from "@/components/article-cover";
+import { UnpublishedArticle } from "@/components/unpublished-article";
 import { Link } from "@/i18n/navigation";
 import { getPostBySlug } from "@/lib/posts";
 import { renderMdx } from "@/lib/mdx";
@@ -20,7 +21,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
   const loc = locale === "fr" ? "fr" : "en";
   const post = await getPostBySlug(loc, slug);
-  if (!post || post.meta.draft) return {};
+  if (!post) return {};
+
+  if (post.meta.draft) {
+    return buildPageMetadata({
+      locale,
+      path: `/articles/${slug}`,
+      title: `${post.meta.title} | SAIFCORE Blog`,
+      description: post.meta.excerpt,
+      image: post.meta.coverImage,
+      robots: { index: false, follow: true },
+    });
+  }
 
   return buildPageMetadata({
     locale,
@@ -39,8 +51,12 @@ export default async function ArticlePage({ params }: Props) {
   const loc = locale === "fr" ? "fr" : "en";
   const post = await getPostBySlug(loc, slug);
 
-  if (!post || post.meta.draft) {
+  if (!post) {
     notFound();
+  }
+
+  if (post.meta.draft) {
+    return <UnpublishedArticle post={post.meta} locale={loc} />;
   }
 
   const t = await getTranslations("articles");

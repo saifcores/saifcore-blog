@@ -11,6 +11,7 @@ type PageMetadataInput = {
   openGraphType?: "website" | "article";
   publishedTime?: string;
   image?: string;
+  robots?: Metadata["robots"];
 };
 
 export function buildPageMetadata({
@@ -21,6 +22,7 @@ export function buildPageMetadata({
   openGraphType = "website",
   publishedTime,
   image,
+  robots,
 }: PageMetadataInput): Metadata {
   const siteUrl = getSiteUrl();
   const localizedPath =
@@ -61,6 +63,7 @@ export function buildPageMetadata({
       description,
       ...(image ? { images: [new URL(image, `${siteUrl}/`).toString()] } : {}),
     },
+    ...(robots ? { robots } : {}),
   };
 }
 
