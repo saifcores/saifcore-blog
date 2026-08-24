@@ -31,15 +31,19 @@ function listFilesystemSlugs(locale: string): string[] {
     .map((file) => file.replace(/\.mdx$/, ""));
 }
 
+// Data Cache survives Vercel deploys. Key by deployment so a git push
+// cannot keep serving the previous GitHub snapshot.
+const deployCacheKey = process.env.VERCEL_DEPLOYMENT_ID ?? "dev";
+
 const cachedGitHubMdx = unstable_cache(
   async (locale: string, slug: string) => readGitHubMdx(locale, slug),
-  ["github-mdx-file"],
+  ["github-mdx-file", deployCacheKey],
   { tags: ["github-mdx"] },
 );
 
 const cachedGitHubSlugs = unstable_cache(
   async (locale: string) => listGitHubMdxSlugs(locale),
-  ["github-mdx-slugs"],
+  ["github-mdx-slugs", deployCacheKey],
   { tags: ["github-mdx-list"] },
 );
 

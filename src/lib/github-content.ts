@@ -194,6 +194,7 @@ async function githubRequest<T>(
 
   const response = await fetch(`https://api.github.com${path}`, {
     ...init,
+    cache: "no-store",
     headers: {
       Authorization: `Bearer ${config.token}`,
       Accept: "application/vnd.github+json",
