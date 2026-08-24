@@ -54,6 +54,25 @@ export const mdxComponents: MDXComponents = {
       {...props}
     />
   ),
+  table: ({ children, ...props }) => (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-left text-sm" {...props}>
+        {children}
+      </table>
+    </div>
+  ),
+  th: (props) => (
+    <th
+      className="border-b border-[var(--border-subtle)] py-2.5 pr-4 text-left font-semibold text-[var(--text-primary)]"
+      {...props}
+    />
+  ),
+  td: (props) => (
+    <td
+      className="border-b border-[var(--border-subtle)] py-2.5 pr-4 align-top text-[var(--text-secondary)]"
+      {...props}
+    />
+  ),
   pre: (props) => {
     if (isMermaidPre(props.children)) {
       const child = Children.toArray(props.children)[0];

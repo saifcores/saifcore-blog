@@ -35,14 +35,12 @@ export function ArticlePreviewContent({
         Preview — unsaved changes
       </div>
       <header className="px-4 py-8 sm:px-8 sm:py-10">
-        <div className="max-w-4xl">
-          <ArticleCover
-            slug={slug}
-            cover={frontmatter.cover}
-            title={frontmatter.title || "Untitled"}
-            priority
-          />
-        </div>
+        <ArticleCover
+          slug={slug}
+          cover={frontmatter.cover}
+          title={frontmatter.title || "Untitled"}
+          priority
+        />
         <div className="mt-6 flex flex-wrap items-center gap-2">
           <ArticleKindBadge kind={frontmatter.kind} label={kindLabel} />
           {frontmatter.publishedAt && (
@@ -62,17 +60,17 @@ export function ArticlePreviewContent({
             </span>
           )}
         </div>
-        <h1 className="mt-5 max-w-3xl text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl">
+        <h1 className="mt-5 text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl">
           {frontmatter.title || "Untitled article"}
         </h1>
         {frontmatter.excerpt && (
-          <p className="mt-3 max-w-2xl text-base text-[var(--text-secondary)] sm:text-lg">
+          <p className="mt-3 text-base text-[var(--text-secondary)] sm:text-lg">
             {frontmatter.excerpt}
           </p>
         )}
       </header>
       <div className="border-t border-[var(--border-subtle)] px-4 pb-10 sm:px-8">
-        <div className="prose-article max-w-3xl pt-8">{body}</div>
+        <div className="prose-article pt-8">{body}</div>
       </div>
     </article>
   );

@@ -30,7 +30,7 @@ export async function UnpublishedArticle({ post, locale }: Props) {
           >
             {tArticles("backToArticles")}
           </Link>
-          <div className="mt-8 max-w-4xl">
+          <div className="mt-8 max-w-3xl">
             <ArticleCover
               slug={post.slug}
               cover={post.cover}
@@ -53,10 +53,10 @@ export async function UnpublishedArticle({ post, locale }: Props) {
           <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
             {post.title}
           </h1>
-          <p className="mt-4 max-w-2xl text-lg text-[var(--text-secondary)]">
+          <p className="mt-4 max-w-3xl text-lg text-[var(--text-secondary)]">
             {post.excerpt}
           </p>
-          <p className="mt-6 max-w-2xl text-[var(--text-muted)]">{t("body")}</p>
+          <p className="mt-6 max-w-3xl text-[var(--text-muted)]">{t("body")}</p>
         </header>
       </article>
 

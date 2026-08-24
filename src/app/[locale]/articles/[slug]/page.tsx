@@ -96,51 +96,53 @@ export default async function ArticlePage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
       />
       <article className="border-b border-[var(--border-subtle)]">
-        <header className="page-container py-12 sm:py-16">
-          <Link
-            href="/"
-            className="text-sm font-medium text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
-          >
-            {t("backToArticles")}
-          </Link>
-          <div className="mt-8 max-w-4xl">
-            <ArticleCover
-              slug={post.meta.slug}
-              cover={post.meta.cover}
-              title={post.meta.title}
-              priority
-            />
-          </div>
-          <div className="mt-8 flex flex-wrap items-center gap-2">
-            <ArticleKindBadge
-              kind={post.meta.kind}
-              label={t(`kinds.${post.meta.kind}`)}
-            />
-            <time
-              dateTime={post.meta.publishedAt}
-              className="font-mono text-xs text-[var(--text-muted)]"
+        <div className="page-container py-12 sm:py-16">
+          <header>
+            <Link
+              href="/"
+              className="text-sm font-medium text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
             >
-              {formatDate(post.meta.publishedAt)}
-            </time>
-            <span className="text-xs text-[var(--text-muted)]">
-              · {post.meta.readingTime}
-            </span>
-          </div>
-          <h1 className="mt-6 max-w-3xl text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-            {post.meta.title}
-          </h1>
-          <p className="mt-4 max-w-2xl text-lg text-[var(--text-secondary)]">
-            {post.meta.excerpt}
-          </p>
-        </header>
+              {t("backToArticles")}
+            </Link>
+            <div className="mt-8 max-w-3xl">
+              <ArticleCover
+                slug={post.meta.slug}
+                cover={post.meta.cover}
+                title={post.meta.title}
+                priority
+              />
+            </div>
+            <div className="mt-8 flex flex-wrap items-center gap-2">
+              <ArticleKindBadge
+                kind={post.meta.kind}
+                label={t(`kinds.${post.meta.kind}`)}
+              />
+              <time
+                dateTime={post.meta.publishedAt}
+                className="font-mono text-xs text-[var(--text-muted)]"
+              >
+                {formatDate(post.meta.publishedAt)}
+              </time>
+              <span className="text-xs text-[var(--text-muted)]">
+                · {post.meta.readingTime}
+              </span>
+            </div>
+            <h1 className="mt-6 max-w-3xl text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
+              {post.meta.title}
+            </h1>
+            <p className="mt-4 max-w-3xl text-lg text-[var(--text-secondary)]">
+              {post.meta.excerpt}
+            </p>
+          </header>
 
-        <div className="page-container max-w-3xl pb-16">
-          <div className="prose-article">{content}</div>
+          <div className="prose-article mt-10 max-w-3xl sm:mt-12">
+            {content}
+          </div>
         </div>
       </article>
 
       <section className="page-container py-12">
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)]/30 p-8 sm:p-10">
+        <div className="max-w-3xl rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)]/30 p-8 sm:p-10">
           <h2 className="text-xl font-semibold text-[var(--text-primary)]">
             {t("endCtaTitle")}
           </h2>
