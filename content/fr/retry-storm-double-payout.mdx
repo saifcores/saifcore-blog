@@ -1,11 +1,10 @@
 ---
 title: La tempête de retries qui a failli payer un marchand deux fois
 excerpt: >-
-  Un timeout fournisseur, une boucle de retry côté client trop naïve, et le seul
-  contrôle d'idempotence qui a évité un règlement en double — et un appel gênant
-  avec la finance.
+  Jeudi 16:47. Un payout marchand. Le client timeout, puis renvoie. Puis encore.
+  Quatre-vingt-dix secondes d'un triple paiement.
 kind: writing
-publishedAt: '2025-09-30'
+publishedAt: "2025-09-30"
 tags:
   - idempotence
   - retries
@@ -14,21 +13,36 @@ tags:
   - rapprochement
 relatedProjects:
   - pan-african-payment-sdk
-draft: true
 cover: /images/articles/retry-storm-double-payout.svg
 ---
 
-Le callback a menti avec un mot. Celui-ci ment avec le silence.
+La finance n'a ouvert aucun ticket. Le support n'a pas appelé le marchand. La seule personne qui a vu quelque chose, c'est un ingénieur avec un café, devant une ligne de log large de trois requêtes.
 
-Un provider mobile money est devenu **lent, pas indisponible** — le pire type de panne. Les requêtes prenaient quatre, cinq, parfois huit secondes au lieu des quelques centaines de millisecondes habituelles.
+C'est la version qui a été livrée. Celle qui a failli l'être a payé le même marchand **trois fois** pour une seule vente.
 
-Une intégration cliente avec une politique de retry trop gourmande s'est mise à renvoyer la même demande de payout après un timeout de trois secondes, persuadée que la première tentative avait échoué. Elle n'avait pas échoué. Elle était juste en retard.
+[Le callback qui a dit `SUCCESS`](/fr/articles/when-success-is-not-settled) a menti avec un mot. Celui-ci a menti avec le silence.
 
-## Ce qui s'est réellement passé
+## Jeudi, 16:47
 
-En environ quatre-vingt-dix secondes, la même commande de payout avait été soumise **trois fois** pour le même marchand. Côté fournisseur, les trois ont fini par réussir — trois virements distincts, même montant, même bénéficiaire.
+Un client partenaire soumet un payout : **85 000 XOF**, un marchand, une commande. Le provider mobile money ne tombe pas. Il devient **lent** — quatre secondes, puis cinq, puis huit. Le temps habituel se compte en quelques centaines de millisecondes. Le timeout du client est à trois secondes.
 
-Si le service de paiement avait traité chaque requête entrante comme une nouvelle commande, le compte du marchand aurait été crédité trois fois pour une seule vente. La finance l'aurait découvert lors du rapprochement de fin de journée — plusieurs jours plus tard — sans piste évidente vers la cause.
+À 16:47:03, le client décide que la première requête a échoué.
+
+Elle n'avait pas échoué. Elle était encore dans le tuyau.
+
+Le client renvoie le même payout. Puis encore.
+
+## Ce que le client a cru vs ce qui était vrai
+
+| Ce que le client a vu     | Ce qui se passait vraiment                 |
+| ------------------------- | ------------------------------------------ |
+| Timeout à 3 secondes      | Le premier virement rampait encore (5–8 s) |
+| Aucune réponse            | Le provider était lent, pas down           |
+| On peut retry sans risque | La première requête était déjà arrivée     |
+
+En environ quatre-vingt-dix secondes, la même commande de payout a été soumise **trois fois**. Côté fournisseur, les trois auraient abouti — trois virements distincts, même montant, même bénéficiaire, une seule vente.
+
+La finance ne l'aurait pas vu cet après-midi-là. Elle l'aurait vu dans un fichier de fin de journée — ou des jours plus tard — sans piste évidente vers un timeout de trois secondes.
 
 ```mermaid
 sequenceDiagram
@@ -39,41 +53,68 @@ sequenceDiagram
   Client->>API: Payout (clé=K)
   API->>Provider: Virement #1
   Note over Provider: Lent (5–8s)
+  Note over Client: Timeout à 3s
   Client->>API: Retry (clé=K)
   Client->>API: Retry (clé=K)
-  API-->>Client: Même réponse (en cours / terminé)
+  API-->>Client: Même réponse (en cours)
   Provider-->>API: Virement #1 OK
-  Note over API: Retries #2/#3 ignorés
+  Note over API: Retries #2 et #3 ignorés
 ```
 
 <Callout variant="warning">
-  C'est le piège des retries sous latence, pas sous panne franche : tout
-  signal qu'un client naïf observe (timeout, absence de réponse, connexion
-  coupée) est indiscernable de « la requête n'est jamais arrivée ». En
-  général, elle est bien arrivée. Elle n'avait juste pas encore répondu.
+  C'est le piège des retries sous latence, pas sous panne franche. Tout signal
+  qu'un client naïf observe — timeout, absence de réponse, connexion coupée —
+  ressemble exactement à « la requête n'est jamais arrivée ». En général, elle
+  est bien arrivée. Elle n'avait juste pas encore répondu.
 </Callout>
 
-## Le seul contrôle qui a tenu la ligne
+## L'idée en une phrase
 
-L'endpoint de payout exigeait une **clé d'idempotence** générée côté client, dérivée de l'ID marchand, de l'ID commande et du montant — pas un UUID aléatoire que la boucle de retry aurait pu régénérer à chaque tentative.
+**Idempotent**, ça veut dire : envoyer deux fois la même commande d'argent, l'argent ne bouge qu'une fois.
 
-Les trois retries portaient la même clé. Le serveur a reconnu les deuxième et troisième appels comme des doublons d'une commande en cours, renvoyé la réponse d'origine, et n'a jamais émis de second virement.
+Pas « l'API a un header ». Pas « on logue les doublons ». Le fait économique se produit **une seule fois**, même quand le réseau répond par un silence, un reset, ou un OK en retard.
 
-| Conception de la clé | Sous tempête de retries |
-| --- | --- |
-| UUID aléatoire par tentative | Trois virements · incident finance |
-| Hash stable de l'intention métier | Un virement · logs bruyants seulement |
+Si vous recrutez pour les paiements, c'est le jugement que vous voulez dans la pièce : les retries sont inévitables ; le silence n'autorise pas à bouger l'argent une seconde fois.
 
-Pas d'incident, pas de surprise en rapprochement, pas d'appel au marchand pour expliquer un remboursement. Juste une ligne de log un peu bruyante, trois requêtes de large, qu'un ingénieur a remarquée le lendemain matin par curiosité.
+## Le seul contrôle qui a tenu
 
-## Ce que « idempotent » doit vraiment dire
+L'endpoint de payout n'acceptait pas un UUID aléatoire. Il exigeait une clé hashée à partir de **marchand + commande + montant** — l'intention métier, pas un ticket que la boucle de retry pouvait recréer à chaque tentative.
+
+Les trois retries portaient la même clé. Le serveur a reconnu les appels deux et trois comme des doublons d'une commande déjà en cours, renvoyé la réponse d'origine, et n'a jamais émis de second virement.
+
+| Comment on fabrique la clé        | Ce qu'une tempête de retries provoque                           |
+| --------------------------------- | --------------------------------------------------------------- |
+| Nouvel UUID à chaque tentative    | Trois virements. Incident finance. Appel au marchand.           |
+| Hash stable de l'intention métier | Un virement. Un log bruyant. La finance n'entend jamais parler. |
+
+| Qui             | Sans cette clé                                           | Avec                                     |
+| --------------- | -------------------------------------------------------- | ---------------------------------------- |
+| **Finance**     | Trois crédits pour une vente, trouvés au rapprochement   | Rien à expliquer                         |
+| **Support**     | Un marchand qui demande pourquoi il a été payé deux fois | Aucun ticket                             |
+| **Engineering** | Un incident review                                       | Une ligne de log, lue le lendemain matin |
+
+Pas de remboursement. Pas d'appel gênant. Juste un log un peu bruyant qu'un ingénieur a lu avec un café.
+
+## Le vendredi qui aurait eu lieu
+
+Si la clé avait été un UUID frais à chaque retry, le payout du jeudi aurait atterri trois fois. Le fichier de règlement du vendredi aurait été « trop juste » — des crédits en trop, pas des lignes manquantes. Le produit aurait appelé ça une victoire. La finance, une fuite. Quelqu'un aurait été au téléphone avec le marchand, pour expliquer un remboursement sur de l'argent déjà dépensé.
+
+Mêmes rails que le callback `SUCCESS`. Autre mensonge : pas un mot, un trou.
 
 La leçon n'était pas « ajoutez des retries avec précaution ». C'était que l'idempotence doit se dériver de l'**intention métier** d'une commande, pas d'un identifiant côté client qu'un retry peut réinitialiser par accident.
 
-Même règle que dans [systèmes fintech à l'échelle](/fr/articles/scalable-fintech-systems) et [le callback qui a dit SUCCESS](/fr/articles/when-success-is-not-settled) : les retries sont inévitables ; une réponse réseau ambiguë n'autorise pas un second débit.
-
-Si la clé peut changer entre deux tentatives, le filet de sécurité n'a jamais vraiment existé.
+Même règle que dans [systèmes fintech à l'échelle](/fr/articles/scalable-fintech-systems) : dix retries doivent égaler **une** intention économique. Si la clé peut changer entre deux tentatives, le filet de sécurité n'a jamais vraiment existé.
 
 ## En résumé
 
 > **L'idempotence n'est pas un en-tête. C'est une clé métier qui doit survivre à chaque timeout, chaque retry et chaque client trop gourmand.**
+
+## Le reste du tuyau
+
+Un mot a menti. Le silence a menti. Le prochain mensonge, c'est un schéma qui s'arrête trop tôt.
+
+La clé de jeudi a sauvé un payout. Une gateway doit tenir la même règle à chaque étape : auth, capture, settlement, ledger, webhook, payout. Chacune peut timeout. Chacune peut retry. Chacune peut avoir l'air fini pendant que l'argent est encore en vol.
+
+Les schémas d'entretien s'arrêtent à « appeler Visa ». L'argent se perd dans les interstices.
+
+**[Du paiement carte au payout marchand →](/fr/articles/payment-gateway-system-design)**
